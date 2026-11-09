@@ -49,6 +49,17 @@ jobs:
             echo "Setting DOTNET_ROOT=$DOTNET_ROOT_FIXED"
             echo "DOTNET_ROOT=$DOTNET_ROOT_FIXED" >> "$GITHUB_ENV"
           fi
+          {
+            echo "dotnet=$(which dotnet || echo missing)"
+            echo "dotnet_real=$(readlink -f "$(which dotnet)" 2>/dev/null || echo '?')"
+            echo "fxr=${FXR:-none}"
+            echo "ls_usr_share_dotnet=$(ls /usr/share/dotnet 2>/dev/null | tr '\n' ' ')"
+            echo "ls_dotnet_host=$(ls /usr/share/dotnet/host 2>/dev/null | tr '\n' ' ')"
+            echo "env_DOTNET_ROOT=${DOTNET_ROOT:-unset}"
+            dotnet --list-runtimes 2>&1 | head -n 5
+          } > "$GITHUB_WORKSPACE/dotnet-diag.txt" 2>&1 || true
+          msg="$(sed 's/%/%25/g; s/\r/%0D/g' "$GITHUB_WORKSPACE/dotnet-diag.txt" | awk '{printf "%s%%0A", $0}')"
+          echo "::error file=dotnetdiag.txt,title=dotnetdiag::$msg"
 
       - name: Setup export templates
         run: |
@@ -104,11 +115,13 @@ jobs:
           code=$?
           echo "EXPORT_EXIT=$code" | tee -a "$GITHUB_WORKSPACE/ci-export.log"
           i=0
-          tail -n 80 "$GITHUB_WORKSPACE/ci-export.log" | while IFS= read -r line; do
+          grep -E "ERROR|error|Exception|EXPORT_EXIT" "$GITHUB_WORKSPACE/ci-export.log" | head -n 9 | while IFS= read -r line; do
             i=$((i+1))
             safe="$(printf '%s' "$line" | sed 's/%/%25/g; s/\r/%0D/g')"
             echo "::error file=export$i.txt,title=export::$safe"
           done
+          msg="$(tail -n 30 "$GITHUB_WORKSPACE/ci-export.log" | sed 's/%/%25/g; s/\r/%0D/g' | awk '{printf "%s%%0A", $0}')"
+          echo "::error file=exporttail.txt,title=exporttail::$msg"
           ls -lh build/
           exit $code
 
