@@ -403,6 +403,9 @@ public partial class MainUI : CanvasLayer
         }
     }
 
+    /// <summary>3.0/Модуль 3: подпись рычага разгона в панели сборки.</summary>
+    public void SetOverclockLabel(string text) => _overclockLabel.Text = text + " • рычаг ещё и на столе стоит";
+
     public void SetTemperature(float celsius, float secondsLeft, bool running)
     {
         _tempBar.Value = celsius;
@@ -430,6 +433,41 @@ public partial class MainUI : CanvasLayer
         _buyButton.Disabled = !_state.CanAfford(PartCatalog.AliBoxPriceRub);
         RefreshTools();
         RefreshGarageUpgrades();
+        RefreshUpgrades();
+        WireButtonClicks();
+    }
+
+    private void RefreshUpgrades()
+    {
+        foreach (Node child in _upgradeList.GetChildren())
+        {
+            child.QueueFree();
+        }
+
+        foreach (ToolsCatalog.ToolDef def in ToolsCatalog.Upgrades)
+        {
+            bool owned = _state.OwnsTool(def.Id);
+            var row = new HBoxContainer();
+            row.AddThemeConstantOverride("separation", 10);
+            Label label = MakeLabel(owned
+                ? $"{def.Name} — СТОИТ В ГАРАЖЕ\n{def.Description}"
+                : $"{def.Name} — {def.PriceRub} ₽\n{def.Description}", 18);
+            label.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+            label.AutowrapMode = TextServer.AutowrapMode.WordSmart;
+            row.AddChild(label);
+
+            if (!owned)
+            {
+                string captured = def.Id;
+                Button buy = MakeButton("Купить");
+                buy.Disabled = _state.Money < def.PriceRub;
+                buy.Pressed += () => BuyToolPressed?.Invoke(captured);
+                row.AddChild(buy);
+            }
+
+            _upgradeList.AddChild(row);
+            _upgradeList.AddChild(new HSeparator());
+        }
     }
 
     private void RefreshInventory()
@@ -702,6 +740,17 @@ public partial class MainUI : CanvasLayer
         garageScroll.AddChild(_garageList);
         content.AddChild(garageScroll);
 
+        Label upgradesTitle = MakeLabel("Апгрейды гаража (3.0)", 24);
+        upgradesTitle.AddThemeColorOverride("font_color", AccentColor);
+        content.AddChild(upgradesTitle);
+
+        var upgradesScroll = new ScrollContainer { CustomMinimumSize = new Vector2(620, 150) };
+        _upgradeList = new VBoxContainer();
+        _upgradeList.AddThemeConstantOverride("separation", 8);
+        _upgradeList.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        upgradesScroll.AddChild(_upgradeList);
+        content.AddChild(upgradesScroll);
+
         AddCloseButton(content, _shopPanel);
         _shopPanel.Visible = false;
     }
@@ -808,6 +857,13 @@ public partial class MainUI : CanvasLayer
         Button openCase = MakeButton("Открыть корпус (-12°C, раз в 20 сек)");
         openCase.Pressed += () => OpenCasePressed?.Invoke();
         content.AddChild(openCase);
+
+        _overclockLabel = MakeLabel("Разгон: выключен", 22);
+        content.AddChild(_overclockLabel);
+        Button lever = MakeButton("РЫЧАГ РАЗГОНА (дёрнуть)");
+        lever.TooltipText = "Или тапни по красному рычагу на краю стола";
+        lever.Pressed += () => CycleOverclockPressed?.Invoke();
+        content.AddChild(lever);
 
         AddCloseButton(content, _buildPanel);
         _buildPanel.Visible = false;

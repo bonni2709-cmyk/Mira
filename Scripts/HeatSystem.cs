@@ -41,6 +41,11 @@ public partial class HeatSystem : Node
     /// <summary>Комнатный вентилятор из магазина инструментов: дует всегда, не устаёт.</summary>
     public float PassiveCoolingPerSecond { get; set; }
 
+    /// <summary>3.0/Модуль 3: вытяжка гаража сдвигает стартовую температуру теста (обычно −5).</summary>
+    public float AmbientOffsetCelsius { get; set; }
+
+    public float EffectiveAmbient => Mathf.Max(20f, AmbientCelsius + AmbientOffsetCelsius);
+
     public void Bind(BuildController build)
     {
         _build = build;
@@ -77,7 +82,8 @@ public partial class HeatSystem : Node
         InChallenge = false;
         _criticalAnnounced = false;
         SecondsLeft = TestDurationSeconds;
-        Temperature = Mathf.Max(Temperature, AmbientCelsius);
+        // С вытяжкой холодный ПК стартует с 29 °C вместо 34; горячий не остывает чудом.
+        Temperature = Mathf.Max(Temperature, EffectiveAmbient);
         PeakTemperature = Temperature;
         RedZoneSeconds = 0f;
         _build.SetFanSpinning(true);
@@ -112,7 +118,7 @@ public partial class HeatSystem : Node
         InChallenge = true;
         _criticalAnnounced = false;
         SecondsLeft = ChallengeDurationSeconds;
-        Temperature = Mathf.Max(Temperature, AmbientCelsius);
+        Temperature = Mathf.Max(Temperature, EffectiveAmbient);
         PeakTemperature = Temperature;
         RedZoneSeconds = 0f;
         _build.SetFanSpinning(true);
@@ -128,7 +134,7 @@ public partial class HeatSystem : Node
             return;
         }
 
-        Temperature = Mathf.Max(AmbientCelsius, Temperature - celsius);
+        Temperature = Mathf.Max(EffectiveAmbient, Temperature - celsius);
         EmitTemperature();
     }
 
@@ -262,9 +268,9 @@ public partial class HeatSystem : Node
 
             EmitTemperature();
         }
-        else if (Temperature > AmbientCelsius)
+        else if (Temperature > EffectiveAmbient)
         {
-            Temperature = Mathf.Max(AmbientCelsius, Temperature - 5.0f * d);
+            Temperature = Mathf.Max(EffectiveAmbient, Temperature - 5.0f * d);
             EmitTemperature();
         }
     }

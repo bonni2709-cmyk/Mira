@@ -55,6 +55,55 @@ public partial class BuildController : Node3D
     /// <summary>2.0/Модуль 3: в сборке есть HDD — во время теста он будет скрипеть.</summary>
     public bool HasHdd => _installed.ContainsKey(PartType.Hdd);
 
+    // ---------- 3.0/Модуль 3: разгон ----------
+    private int _overclockLevel;
+    private Node3D? _leverHandle;
+
+    /// <summary>Ступень разгона рычагом на столе: 0 — сток, 3 — «да гори оно всё, но быстро».</summary>
+    public int OverclockLevel
+    {
+        get => _overclockLevel;
+        set
+        {
+            _overclockLevel = Mathf.Clamp(value, 0, 3);
+            UpdateLeverVisual();
+        }
+    }
+
+    /// <summary>Во сколько разгон раздувает цену готовой сборки.</summary>
+    public float OverclockPriceMultiplier => 1.0f + 0.15f * OverclockLevel;
+
+    /// <summary>Стол «Нержавейка» (3.0) выставляет 0.5: детали пачкаются вдвое меньше.</summary>
+    public float DustFactor { get; set; } = 1.0f;
+
+    public string CycleOverclock()
+    {
+        OverclockLevel = (OverclockLevel + 1) % 4;
+        return OverclockLevel switch
+        {
+            1 => "РАЗГОН +15%: частота поднята, цена выросла, вентилятор нервно сглотнул.",
+            2 => "РАЗГОН +30%: ПК рычит, как спортивный «Жигуль». Температура попрёт вверх — следи за тестом.",
+            3 => "РАЗГОН +45%: МАКСИМУМ. Это уже не компьютер, а контролируемый пожар с RGB-амбициями.",
+            _ => "Разгон выключен. Сток, тишина, никакой драмы. Скучно, но безопасно."
+        };
+    }
+
+    public string OverclockLabel => OverclockLevel switch
+    {
+        1 => "Разгон: +15% к цене (и к жару)",
+        2 => "Разгон: +30% к цене (жарко)",
+        3 => "Разгон: +45% к цене (ПОЖАР)",
+        _ => "Разгон: выключен"
+    };
+
+    private void UpdateLeverVisual()
+    {
+        if (_leverHandle != null)
+        {
+            _leverHandle.RotationDegrees = new Vector3(-38f + OverclockLevel * 26f, 0, 0);
+        }
+    }
+
     /// <summary>2.0/Модуль 3: попал ли последний удар молотка по делу (для звука и тряски).</summary>
     public bool LastHammerLanded { get; private set; }
 
@@ -180,7 +229,7 @@ public partial class BuildController : Node3D
         {
             Part = part,
             Visual = PartVisualFactory.Create(part),
-            Dust01 = 0.3f + (float)_rng.NextDouble() * 0.55f
+            Dust01 = (0.3f + (float)_rng.NextDouble() * 0.55f) * DustFactor
         };
 
         bool fits = RollFits(part);
@@ -478,7 +527,7 @@ public partial class BuildController : Node3D
     /// <summary>Скорость нагрева °C/сек по текущему состоянию сборки.</summary>
     public float GetHeatRatePerSecond()
     {
-        float rate = 1.05f;
+        float rate = 1.05f + OverclockLevel switch { 1 => 0.35f, 2 => 0.75f, 3 => 1.20f, _ => 0f };
         float dustSum = 0f;
 
         foreach (InstalledPart entry in _installed.Values)
@@ -699,7 +748,7 @@ public partial class BuildController : Node3D
             sum += entry.Hammered && !KnifeProtectsValue ? (int)(entry.Part.ValueRub * 0.8f) : entry.Part.ValueRub;
         }
 
-        return sum;
+        return (int)(sum * OverclockPriceMultiplier);
     }
 
     /// <summary>ПК уехал к клиенту: стол пустеет, детали из инвентаря не возвращаются.</summary>
@@ -872,6 +921,36 @@ public partial class BuildController : Node3D
         tween.TweenCallback(Callable.From(() => puff.QueueFree()));
     }
 
+    /// <summary>
+    /// Рычаг разгона на краю стола (3.0/Модуль 3): ручка наклоняется по ступеням,
+    /// тап по рычагу переключает разгон. Коллайдер с метой ловит Main через рейкаст.
+    /// </summary>
+    private void BuildOverclockLever()
+    {
+        var leverBase = new Node3D { Name = "OverclockLever", Position = new Vector3(2.25f, 0.02f, -0.85f) };
+        leverBase.AddChild(PartVisualFactory.Box("LeverBase", new Vector3(0, 0.06f, 0),
+            new Vector3(0.34f, 0.12f, 0.34f), PixelTextureFactory.DarkMetal()));
+
+        _leverHandle = new Node3D { Name = "LeverHandle", Position = new Vector3(0, 0.12f, 0) };
+        _leverHandle.AddChild(PartVisualFactory.Cylinder("LeverStick", new Vector3(0, 0.30f, 0),
+            0.045f, 0.62f, PixelTextureFactory.Flat(new Color(0.55f, 0.52f, 0.48f), 0.5f)));
+        _leverHandle.AddChild(PartVisualFactory.Box("LeverKnob", new Vector3(0, 0.64f, 0),
+            new Vector3(0.16f, 0.16f, 0.16f), PixelTextureFactory.Flat(new Color(0.62f, 0.20f, 0.14f), 0.6f)));
+        leverBase.AddChild(_leverHandle);
+        AddChild(leverBase);
+        UpdateLeverVisual();
+
+        var body = new StaticBody3D { Name = "LeverBody" };
+        body.SetMeta("overclock_lever", true);
+        var shape = new CollisionShape3D
+        {
+            Shape = new BoxShape3D { Size = new Vector3(0.55f, 0.95f, 0.55f) },
+            Position = new Vector3(0, 0.45f, 0)
+        };
+        body.AddChild(shape);
+        leverBase.AddChild(body);
+    }
+
     private static void SetGhostMaterial(Node root)
     {
         foreach (Node child in root.GetChildren())
@@ -898,6 +977,7 @@ public partial class BuildController : Node3D
     {
         AddChild(PartVisualFactory.Box("AssemblyTableTop", new Vector3(0, -0.09f, 0),
             new Vector3(5.2f, 0.18f, 2.6f), PixelTextureFactory.Wood()));
+        BuildOverclockLever();
         AddChild(PartVisualFactory.Box("AssemblyTableLegL", new Vector3(-2.4f, -0.60f, -1.1f),
             new Vector3(0.18f, 0.9f, 0.18f), PixelTextureFactory.DarkMetal()));
         AddChild(PartVisualFactory.Box("AssemblyTableLegR", new Vector3(2.4f, -0.60f, -1.1f),

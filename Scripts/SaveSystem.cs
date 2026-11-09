@@ -47,6 +47,8 @@ public static class SaveSystem
         public int TotalEarnedRub { get; set; }
         public int Reputation { get; set; } = GameState.StartReputation;
         public int GarageLevel { get; set; } = 1;
+        /// <summary>3.0/Модуль 3: ступень разгона рычага на столе (старые сейвы = 0).</summary>
+        public int Overclock { get; set; }
     }
 
     private static string SavePath => ProjectSettings.GlobalizePath("user://trashpc_save.json");
@@ -62,7 +64,8 @@ public static class SaveSystem
             TotalEarnedRub = state.TotalEarnedRub,
             Reputation = state.Reputation,
             GarageLevel = state.GarageLevel,
-            Tools = new List<string>(state.OwnedTools)
+            Tools = new List<string>(state.OwnedTools),
+            Overclock = build?.OverclockLevel ?? 0
         };
 
         foreach (PcPart part in state.Inventory)
@@ -77,6 +80,7 @@ public static class SaveSystem
             if (previous != null)
             {
                 data.Installed = previous.Installed;
+                data.Overclock = previous.Overclock;
             }
         }
 

@@ -13,6 +13,9 @@ public static class ToolsCatalog
     public const string SwissKnife = "swiss_knife";
     public const string Turbine = "turbine";
     public const string Crate = "crate";
+    // Обновление 3.0, Модуль 3: апгрейды гаража (отдельная вкладка в магазине).
+    public const string ExtractorHood = "extractor_hood";
+    public const string SteelTable = "steel_table";
 
     public sealed record ToolDef(string Id, string Name, int PriceRub, string Description);
 
@@ -34,8 +37,25 @@ public static class ToolsCatalog
             "Инвентарь: +5 слотов (15 → 20). Место под детали, запчасти, мечты и ещё один ящик поменьше."),
     };
 
+    /// <summary>Апгрейды самого гаража: покупаются там же, живут в том же списке владений.</summary>
+    public static readonly IReadOnlyList<ToolDef> Upgrades = new List<ToolDef>
+    {
+        new(ExtractorHood, "Вытяжка «Циклон»", 700,
+            "Во время теста стартовая температура на 5 °C ниже: дым и гарь уходят в трубу, а не в лёгкие и процессор."),
+        new(SteelTable, "Стол «Нержавейка»", 550,
+            "Детали на новом столе пачкаются пылью вдвое меньше, а разгон стабильнее: всплески жара случаются в два раза реже."),
+    };
+
     public static ToolDef? Find(string id)
     {
+        foreach (ToolDef def in Upgrades)
+        {
+            if (def.Id == id)
+            {
+                return def;
+            }
+        }
+
         foreach (ToolDef def in All)
         {
             if (def.Id == id)

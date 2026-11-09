@@ -42,6 +42,7 @@ public partial class Main : Node3D
     private bool _gameStarted;
     private bool _blowHeld;
     private float _hddScratchTimer;
+    private float _overclockShockTimer;
 
     private Vector2 _pressPosition;
     private bool _pointerDown;
@@ -155,6 +156,12 @@ public partial class Main : Node3D
         _ui.BuyGaragePressed += OnBuyGaragePressed;
         _ui.GoToDumpPressed += OnGoToDump;
         _ui.ButtonClicked += () => _sound.PlayClick();
+        _ui.CycleOverclockPressed += () =>
+        {
+            _ui.SetMessage(_build.CycleOverclock());
+            _sound.PlayCreak();
+            RefreshBuildUi();
+        };
         _ui.MayoApplied += OnMayoApplied;
         _ui.CoolTapPressed += () =>
         {
@@ -254,6 +261,22 @@ public partial class Main : Node3D
         if (blowing && _gameStarted)
         {
             _build.ApplyBlow(delta);
+        }
+
+        if (_heat.IsRunning && _build.OverclockLevel > 0)
+        {
+            _overclockShockTimer -= (float)delta;
+            if (_overclockShockTimer <= 0f)
+            {
+                _overclockShockTimer = 4.0f;
+                float chance = 0.07f * _build.OverclockLevel * (_state.OwnsTool(ToolsCatalog.SteelTable) ? 0.5f : 1.0f);
+                if (_rng.NextDouble() < chance)
+                {
+                    _heat.AddHeatShock();
+                    _cameraRig.AddShake(0.18f);
+                    _ui.SetMessage("РАЗГОН ДАЛ О СЕБЕ ЗНАТЬ: всплеск жара +3 °C! Частота — это не бесплатные понты.");
+                }
+            }
         }
 
         if (_heat.IsRunning && _build.HasHdd)
@@ -523,6 +546,31 @@ public partial class Main : Node3D
             note += " Спецзаказ закрыт: ПК от аккумулятора уехал, соседи в шоке. Репутация +10!";
         }
 
+        if (_clientData.IsHacker)
+        {
+            int cpuValue = _build.Installed.TryGetValue(PartType.Cpu, out BuildController.InstalledPart cpuEntry)
+                ? cpuEntry.Part.ValueRub : 0;
+            if (cpuValue >= 200)
+            {
+                int cryptoBonus = (int)(paid * 0.20f);
+                paid += cryptoBonus;
+                repDelta += 4;
+                note += $" Хакер кивнул процессору ({cpuValue} ₽ — достойный камень) и перевёл крипту: +{cryptoBonus} ₽ сверху, как договаривались. Репутация в узких кругах +4.";
+            }
+            else if (_rng.Next(100) < 50)
+            {
+                paid = (int)(paid * 0.25f);
+                repDelta = -5;
+                note += $" Процессор за {cpuValue} ₽ хакера не впечатлил — он перевёл четверть суммы и растворился в ночи. КИНУЛ. Репутация −5, выводы сделаны.";
+            }
+            else
+            {
+                paid = (int)(paid * 0.7f);
+                repDelta -= 2;
+                note += $" Процессор слабоват ({cpuValue} ₽), хакер заплатил 70% «за молчание» и ушёл недовольный. Репутация −2.";
+            }
+        }
+
         if (_clientData.RequiresRgb)
         {
             if (_build.HasRgb)
@@ -590,6 +638,8 @@ public partial class Main : Node3D
         _build.KnifeProtectsValue = _state.OwnsTool(ToolsCatalog.SwissKnife);
         _heat.PassiveCoolingPerSecond = _state.OwnsTool(ToolsCatalog.Turbine) ? 2.2f
             : _state.OwnsTool(ToolsCatalog.DeskFan) ? 1.6f : 0f;
+        _heat.AmbientOffsetCelsius = _state.OwnsTool(ToolsCatalog.ExtractorHood) ? -5f : 0f;
+        _build.DustFactor = _state.OwnsTool(ToolsCatalog.SteelTable) ? 0.5f : 1.0f;
     }
 
     private void OnGoToDump()
@@ -641,6 +691,7 @@ public partial class Main : Node3D
                 installed.Hammered, installed.HammerHits, installed.Dust01, installed.Paste01);
         }
 
+        _build.OverclockLevel = data.Overclock;
         _garage.ApplyLevel(_state.GarageLevel);
         GD.Print("Trash-PC Tycoon: сейв загружен.");
     }
@@ -924,6 +975,7 @@ public partial class Main : Node3D
             && entry.NeedsHammer;
         _ui.SetHammerEnabled(canHammer);
         _ui.SetPasteState(_build.CpuPaste01, false);
+        _ui.SetOverclockLabel(_build.OverclockLabel);
     }
 
 
@@ -1023,6 +1075,14 @@ public partial class Main : Node3D
         var collider = hit["collider"].AsGodotObject() as Node;
         if (collider == null)
         {
+            return;
+        }
+
+        if (collider.HasMeta("overclock_lever"))
+        {
+            _ui.SetMessage(_build.CycleOverclock());
+            _sound.PlayCreak();
+            RefreshBuildUi();
             return;
         }
 
