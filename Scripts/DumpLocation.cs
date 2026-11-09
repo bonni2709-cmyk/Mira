@@ -62,6 +62,7 @@ public partial class DumpLocation : Node3D
         _ui.RefreshDumpPressed += () => GetTree().ReloadCurrentScene();
         _ui.DigPressed += DigRandomHeap;
         _ui.ButtonClicked += () => _sound.PlayClick();
+        _ui.DisassemblePressed += OnDisassemble;
         UpdateHeapsStatus();
         _ui.SetMessage("Приехал на свалку. Собаки делают вид, что ты не интересен. Тапай по кучам!");
 
@@ -190,6 +191,55 @@ public partial class DumpLocation : Node3D
         {
             DigHeap(heap);
         }
+    }
+
+    /// <summary>
+    /// Разбор хлама (4.0/Модуль 3): убитая деталь превращается в сырьё скупщика.
+    /// Медь — обычное дело, пластик — мелочь, золото — редкий джекпот с контактов.
+    /// </summary>
+    private void OnDisassemble()
+    {
+        PcPart? victim = null;
+        foreach (PcPart part in _state.Inventory)
+        {
+            if (part.Quality == PartQuality.Trash || part.Type == PartType.Junk)
+            {
+                victim = part;
+                break;
+            }
+        }
+
+        if (victim == null)
+        {
+            _ui.SetMessage("Разбирать нечего: нужен убитый хлам (состояние «убитая») в инвентаре. Копай кучи — там такого добра хватает.");
+            return;
+        }
+
+        _state.RemovePart(victim);
+        _sound.PlayHammer();
+
+        int roll = _rng.Next(100);
+        if (roll < 12)
+        {
+            int gold = _rng.Next(120, 181);
+            _state.AddMoney(gold);
+            _sound.PlayCash();
+            _ui.SetMessage($"ЗОЛОТО! В «{victim.Name}» нашлись позолоченные контакты: скупщик отслюнявил {gold} ₽ и даже снял шапку.");
+        }
+        else if (roll < 64)
+        {
+            int copper = _rng.Next(25, 46);
+            _state.AddMoney(copper);
+            _ui.SetMessage($"Разобрал «{victim.Name}»: медные обмотки и провода ушли скупщику за {copper} ₽. Пахнет горелой изоляцией и прибылью.");
+        }
+        else
+        {
+            int plastic = _rng.Next(8, 17);
+            _state.AddMoney(plastic);
+            _ui.SetMessage($"Разобрал «{victim.Name}»: внутри в основном пластик и разочарование. Скупщик дал {plastic} ₽ и совет не сдаваться.");
+        }
+
+        SaveSystem.Save(_state, null);
     }
 
     private void DigRandomHeap()

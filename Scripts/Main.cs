@@ -408,6 +408,13 @@ public partial class Main : Node3D
                 {
                     status += " Мажор ждёт RGB-ленту (ищи на свалке и в коробках AliExpress): без подсветки заплатит на 40% меньше.";
                 }
+
+                if (_clientData.IsStreamer)
+                {
+                    status += _build.HasRgb
+                        ? " Стример видит RGB — готов платить x3 от цены."
+                        : " СТРИМЕР ПЛАТИТ x3, но нужна RGB-лента в корпусе! Без неё — 40% и разоблачение на стриме.";
+                }
                 _ui.SetClientDialogue(_clientData.Name, ClientCatalog.WaitingLine, status,
                     false, false, missing.Count == 0 && !_heat.IsRunning, false, true);
                 break;
@@ -539,6 +546,32 @@ public partial class Main : Node3D
             note += " Репутация +6.";
         }
 
+        // 4.0/Модуль 3: репутация стала жёсткой. Печка на выходе и сборка из откровенного мусора
+        // теперь не «ну ладно», а жалобы по всему району.
+        if (!_clientData.IsIranianOrder)
+        {
+            if (_challengePeak > 85f && repDelta > 0)
+            {
+                repDelta = -4;
+                note += $" Пик {_challengePeak:0}°C — клиент потом жаловался всему району, что у него не ПК, а печка с Wi-Fi. Репутация −4 вместо похвалы.";
+            }
+
+            int trashCount = 0;
+            foreach (BuildController.InstalledPart entry in _build.Installed.Values)
+            {
+                if (entry.Part.Quality == PartQuality.Trash)
+                {
+                    trashCount++;
+                }
+            }
+
+            if (trashCount >= 3)
+            {
+                repDelta -= 3;
+                note += $" Сарафанное радио донесло: {trashCount} детали в ПК — убитый хлам. Репутация −3 за честность, которую не просили.";
+            }
+        }
+
         if (_clientData.IsIranianOrder)
         {
             repDelta = 10;
@@ -567,6 +600,22 @@ public partial class Main : Node3D
                 paid = (int)(paid * 0.7f);
                 repDelta -= 2;
                 note += $" Процессор слабоват ({cpuValue} ₽), хакер заплатил 70% «за молчание» и ушёл недовольный. Репутация −2.";
+            }
+        }
+
+        if (_clientData.IsStreamer)
+        {
+            if (_build.HasRgb)
+            {
+                paid = price * 3;
+                repDelta += 5;
+                note += " Стример включил камеру: «ЧАТ, ВЫ ЭТО ВИДИТЕ?!» — заплатил x3 от цены и обещал обзор. Репутация +5 сверху.";
+            }
+            else
+            {
+                paid = (int)(paid * 0.4f);
+                repDelta = -8;
+                note += " Стример скривился: «Стрим без подсветки — это не стрим». Заплатил 40% и ушёл снимать обзор-разоблачение. Репутация −8.";
             }
         }
 

@@ -34,6 +34,8 @@ public sealed class ClientData
     public bool RequiresRgb;
     /// <summary>3.0/Модуль 3: хакер платит криптой, требует мощный процессор и может кинуть.</summary>
     public bool IsHacker;
+    /// <summary>4.0/Модуль 3: мажор-стример платит x3, но только за ПК с RGB.</summary>
+    public bool IsStreamer;
 }
 
 public static class ClientCatalog
@@ -43,7 +45,7 @@ public static class ClientCatalog
 
     private sealed record Archetype(string Name, string[] PersonNames, string Game, string Intro,
         int BudgetMin, int BudgetMax, Color Hoodie, Color Cap, ClientHat Hat, float? MaxTemp, int MinGarageLevel,
-        bool Rgb = false, bool Hacker = false);
+        bool Rgb = false, bool Hacker = false, bool Streamer = false);
 
     private static readonly Archetype[] Pool =
     {
@@ -72,6 +74,11 @@ public static class ClientCatalog
             "Киберпанк и кое-что ещё",
             "Тсс. Мне нужен мощный процессор. Очень мощный. Зачем — не спрашивай. Заплачу криптовалютой, курс честный, гаражный. Но если проц слабый — я просто исчезну. Как и твои деньги.",
             3500, 6500, new Color(0.16f, 0.18f, 0.16f), new Color(0.10f, 0.10f, 0.10f), ClientHat.Beanie, null, 1, false, true),
+        new("Мажор-Стример",
+            new[] { "Влад «100К подписчиков»", "Стример Даня (почти партнёрка)" },
+            "Стрим в 4K и подсветка",
+            "Йоу. Мне нужен ПК для стрима. Плачу в ТРИ раза больше твоего прайса, слышишь? Но! Внутри должна быть RGB-лента, чтобы на стриме всё переливалось. Без подсветки даже не вздумай мне это показывать.",
+            7000, 12000, new Color(0.65f, 0.25f, 0.55f), new Color(0.20f, 0.20f, 0.22f), ClientHat.Cap, null, 2, true, false, true),
         new("Мажор",
             new[] { "Мажор Тимур, 16 лет", "Даня «папин бизнес»", "Кирилл, у которого айфон новее твоего ПК" },
             "Киберпанк, чтобы СВЕТИЛОСЬ",
@@ -118,9 +125,11 @@ public static class ClientCatalog
         string person = arch.PersonNames[rng.Next(arch.PersonNames.Length)];
         int budget = (int)(rng.Next(arch.BudgetMin, arch.BudgetMax + 1) * budgetMultiplier);
 
-        string request = arch.Hacker
-            ? "Запусти Киберпанк при мне на минуту. И слушай сюда: процессор нужен МОЩНЫЙ (смотри цену камня — от 200 ₽ и выше, свалка-пентиум не катит). Слабый проц — сделки не будет. Вообще. Понял?"
-            : arch.Rgb
+        string request = arch.Streamer
+            ? "Запусти Киберпанк при мне на минуту, это будет мой тест-стрим. И запомни: RGB-лента в корпусе — обязательна, чат должен видеть красоту. Есть лента — плачу x3 от цены. Нет ленты — заберу за 40% и всем расскажу, какой ты гараж."
+            : arch.Hacker
+                ? "Запусти Киберпанк при мне на минуту. И слушай сюда: процессор нужен МОЩНЫЙ (смотри цену камня — от 200 ₽ и выше, свалка-пентиум не катит). Слабый проц — сделки не будет. Вообще. Понял?"
+                : arch.Rgb
                 ? "Запусти Киберпанк при мне на минуту. И главное: RGB-ЛЕНТА внутри, чтобы светилось и переливалось. Ленту ищи на свалке или в коробках AliExpress. Нет светодиодов — заплачу как за обычный комп, то есть обидно мало."
                 : arch.MaxTemp.HasValue
                     ? $"Включи при мне: {arch.Game}. И чтобы не шумело! Если нагреется выше {arch.MaxTemp.Value:0} градусов — это уже не компьютер, а обогреватель, платить за обогреватель не буду."
@@ -139,7 +148,8 @@ public static class ClientCatalog
             Hat = arch.Hat,
             MaxTempCelsius = arch.MaxTemp,
             RequiresRgb = arch.Rgb,
-            IsHacker = arch.Hacker
+            IsHacker = arch.Hacker,
+            IsStreamer = arch.Streamer
         };
     }
 }

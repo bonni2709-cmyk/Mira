@@ -12,6 +12,8 @@ public partial class DumpUI : CanvasLayer
     public event Action? BackToGaragePressed;
     public event Action? RefreshDumpPressed;
     public event Action? DigPressed;
+    /// <summary>4.0/Модуль 3: разобрать убитый хлам на медь/пластик/золото.</summary>
+    public event Action? DisassemblePressed;
 
     private GameState _state = null!;
     private Label _moneyLabel = null!;
@@ -63,6 +65,15 @@ public partial class DumpUI : CanvasLayer
         _messageLabel = MakeLabel("Свалка. Пахнет возможностями и немного — бедой.", 21);
         _messageLabel.AutowrapMode = TextServer.AutowrapMode.WordSmart;
         messagePanel.AddChild(_messageLabel);
+
+        var scrap = MakeButton("РАЗОБРАТЬ ХЛАМ");
+        scrap.SetAnchorsPreset(Control.LayoutPreset.BottomRight);
+        scrap.Position = new Vector2(-300, -196);
+        scrap.Size = new Vector2(280, 76);
+        scrap.AddThemeFontSizeOverride("font_size", 23);
+        scrap.TooltipText = "Убитые детали -> медь, пластик, иногда золото";
+        scrap.Pressed += () => DisassemblePressed?.Invoke();
+        AddChild(scrap);
 
         var dig = MakeButton("КОПАТЬ");
         dig.SetAnchorsPreset(Control.LayoutPreset.BottomRight);
