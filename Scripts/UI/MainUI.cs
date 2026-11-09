@@ -63,6 +63,8 @@ public partial class MainUI : CanvasLayer
     private Button _rejectButton = null!;
     private VBoxContainer _toolsList = null!;
     private VBoxContainer _garageList = null!;
+    private VBoxContainer _upgradeList = null!;
+    private Label _overclockLabel = null!;
     private Label _reputationLabel = null!;
     private Label _moneyLabel = null!;
     private Label _inventoryCountLabel = null!;
