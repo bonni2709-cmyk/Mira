@@ -191,6 +191,12 @@ jobs:
             grep "^export/android" "$SETTINGS" || true
           fi
 
+      - name: Install Android build template (Gradle)
+        run: |
+          cd "$PROJECT_PATH"
+          godot --headless --install-android-build-template
+          ls android/build || ls android
+
       - name: Export Android APK (debug)
         run: |
           cd "$PROJECT_PATH"
