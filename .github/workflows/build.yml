@@ -203,6 +203,7 @@ jobs:
           cd ../..
           printf '%s\n' "${GODOT_VERSION}.stable.mono" > android/.build_version
           printf '\n' > android/build/.gdignore
+          chmod +x android/build/gradlew || true
           {
             echo "=== android tree ==="
             find android -maxdepth 2 | head -n 40
