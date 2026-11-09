@@ -22,6 +22,15 @@ public partial class Main : Node3D
     private BuildController _build = null!;
     private HeatSystem _heat = null!;
     private AndroidSensors _sensors = null!;
+    private ClientController _client = null!;
+    private SoundSystem _sound = null!;
+
+    private enum ClientStage { None, Intro, Request, WaitingBuild, ChallengePassed }
+    private ClientStage _clientStage = ClientStage.None;
+    private ClientData? _clientData;
+    private bool _challengeRunning;
+    private float _nextClientTimer = -1f;
+    private float _openCaseCooldown;
 
     private PcPart? _pendingAliPart;
     private bool _deliveryInProgress;
