@@ -130,6 +130,7 @@ jobs:
           curl -sSL "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip" -o /tmp/cmdtools.zip
           cd /tmp && "$HOME/jdk/bin/jar" xf cmdtools.zip
           mv /tmp/cmdline-tools "$SDK/cmdline-tools/latest"
+          chmod -R +x "$SDK/cmdline-tools/latest/bin" || true
           export ANDROID_HOME="$SDK" ANDROID_SDK_ROOT="$SDK"
           echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
           echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
