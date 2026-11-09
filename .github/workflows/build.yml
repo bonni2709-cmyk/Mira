@@ -99,12 +99,17 @@ jobs:
             echo "=== env ==="
             echo "ANDROID_HOME=${ANDROID_HOME:-unset} ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT:-unset} HOME=$HOME"
             echo "=== dotnet build ==="
-            dotnet build Mira.csproj -v minimal 2>&1 || true
+            dotnet build Mira.csproj -v minimal > "$GITHUB_WORKSPACE/dotnet-build.log" 2>&1
+            echo "DOTNET_BUILD_EXIT=$?"
+            cat "$GITHUB_WORKSPACE/dotnet-build.log"
             echo "=== godot import ==="
             godot --headless --verbose --import 2>&1
             echo "IMPORT_EXIT=$?"
           } | tee "$GITHUB_WORKSPACE/ci-import.log"
+          msg="$(grep -E "error|Error" "$GITHUB_WORKSPACE/dotnet-build.log" | head -n 25 | sed 's/%/%25/g; s/\r/%0D/g' | awk '{printf "%s%%0A", $0}')"
+          echo "::error file=dotnetbuild.txt,title=dotnetbuild::$msg"
           grep -q "IMPORT_EXIT=0" "$GITHUB_WORKSPACE/ci-import.log"
+          grep -q "DOTNET_BUILD_EXIT=0" "$GITHUB_WORKSPACE/ci-import.log"
 
       - name: Upload CI logs
         if: always()
