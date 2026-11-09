@@ -40,6 +40,9 @@ public partial class SoundSystem : Node
     public void PlayCash() => Play(MakeStream(SynthCash()), -8f);
     public void PlayFail() => Play(MakeStream(SynthSweep(300f, 60f, 0.5f)), -10f);
 
+    /// <summary>Клик кнопки интерфейса (3.0/Модуль 2): короткий, как терпение игрока.</summary>
+    public void PlayClick() => Play(MakeStream(SynthClick()), -12f);
+
     /// <summary>Вскрытие коробки: хруст картона и рвущийся скотч.</summary>
     public void PlayBoxOpen() => Play(MakeStream(SynthBoxOpen()), -7f);
 
@@ -206,6 +209,19 @@ public partial class SoundSystem : Node
             float freq = t < 0.16f ? 880f : 1320f;
             float env = Mathf.Exp(-Mathf.Max(0f, t - (t < 0.16f ? 0f : 0.16f)) * 9f);
             samples[i] = Mathf.Sign(Mathf.Sin(Mathf.Tau * freq * t)) * env * 0.22f;
+        }
+
+        return samples;
+    }
+
+    private float[] SynthClick()
+    {
+        int count = (int)(MixRate * 0.055f);
+        var samples = new float[count];
+        for (int i = 0; i < count; i++)
+        {
+            float t = i / (float)MixRate;
+            samples[i] = Mathf.Sin(Mathf.Tau * 1750f * t) * Mathf.Exp(-t * 90f) * 0.5f;
         }
 
         return samples;

@@ -12,7 +12,10 @@ public static class PartVisualFactory
     public static Node3D Create(PcPart part)
     {
         var root = new Node3D { Name = "PartVisual" };
-        StandardMaterial3D body = PixelTextureFactory.Flat(part.Tint);
+        // 3.0/Модуль 2: корпус — ржавый по-настоящему, остальные детали честно крашены.
+        StandardMaterial3D body = part.Type == PartType.ComputerCase
+            ? PixelTextureFactory.RustedTint(part.Tint)
+            : PixelTextureFactory.Flat(part.Tint);
         StandardMaterial3D dark = PixelTextureFactory.Flat(new Color(0.16f, 0.15f, 0.14f));
 
         Vector3 size = part.Type switch

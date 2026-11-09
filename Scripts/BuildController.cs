@@ -273,6 +273,7 @@ public partial class BuildController : Node3D
         }
 
         LastHammerLanded = true;
+        SpawnHammerSparks(entry);
         entry.HammerHits++;
         Input.VibrateHandheld(90);
 
@@ -546,6 +547,53 @@ public partial class BuildController : Node3D
 
             SpawnExplosionBurst();
         }
+    }
+
+    /// <summary>
+    /// Искры и пыль из-под молотка (3.0/Модуль 2): короткий жёлтый фонтанчик
+    /// и честное серое облачко. Живут меньше секунды, память не держат.
+    /// </summary>
+    private void SpawnHammerSparks(InstalledPart entry)
+    {
+        Vector3 from = entry.Visual.Position + new Vector3(0, 0.3f, 0);
+        SpawnBurst(from, new Color(1.0f, 0.78f, 0.30f), 16, 2.6f, 4.2f, -8.0f, 0.035f, 0.4f);
+        SpawnBurst(from, new Color(0.55f, 0.48f, 0.38f, 0.85f), 8, 0.7f, 1.4f, -2.0f, 0.09f, 0.55f);
+    }
+
+    private void SpawnBurst(Vector3 from, Color color, int amount, float velocityMin, float velocityMax,
+        float gravityY, float scale, float lifetime)
+    {
+        var material = new ParticleProcessMaterial
+        {
+            Direction = new Vector3(0, 1, 0),
+            Spread = 38f,
+            InitialVelocityMin = velocityMin,
+            InitialVelocityMax = velocityMax,
+            Gravity = new Vector3(0, gravityY, 0),
+            ScaleMin = scale * 0.7f,
+            ScaleMax = scale * 1.3f,
+            Color = color
+        };
+
+        var mesh = new BoxMesh { Size = new Vector3(scale, scale, scale) };
+        mesh.Material = PixelTextureFactory.Flat(color, 0.6f);
+
+        var particles = new GpuParticles3D
+        {
+            Amount = amount,
+            Lifetime = lifetime,
+            OneShot = true,
+            Explosiveness = 0.9f,
+            ProcessMaterial = material,
+            DrawPass1 = mesh,
+            Position = from
+        };
+        AddChild(particles);
+        particles.Emitting = true;
+
+        Tween tween = CreateTween();
+        tween.TweenInterval(lifetime + 0.3f);
+        tween.TweenCallback(Callable.From(() => particles.QueueFree()));
     }
 
     /// <summary>

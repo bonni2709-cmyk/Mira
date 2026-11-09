@@ -31,7 +31,7 @@ public partial class GarageBuilder : Node3D
     {
         _level2.Visible = level >= 2;
         _level3.Visible = level >= 3;
-        _bulbLight.LightEnergy = level switch { >= 3 => 1.5f, 2 => 1.30f, _ => 1.15f };
+        _bulbLight.LightEnergy = level switch { >= 3 => 1.85f, 2 => 1.65f, _ => 1.5f };
     }
 
     /// <summary>Событие «отключили свет»: лампочка гаснет на время, гараж не сдаётся.</summary>
@@ -178,9 +178,9 @@ public partial class GarageBuilder : Node3D
             Name = "CeilingBulb",
             Position = new Vector3(0, 4.45f, 0),
             LightColor = new Color(1.0f, 0.84f, 0.60f),
-            LightEnergy = 1.15f,
-            OmniRange = 16.0f,
-            OmniAttenuation = 0.9f,
+            LightEnergy = 1.5f,
+            OmniRange = 11.0f,
+            OmniAttenuation = 1.4f,
             ShadowEnabled = false
         };
         _bulbLight = light;
@@ -191,7 +191,7 @@ public partial class GarageBuilder : Node3D
             Name = "WeakFill",
             RotationDegrees = new Vector3(-48f, -32f, 0),
             LightColor = new Color(0.75f, 0.72f, 0.66f),
-            LightEnergy = 0.35f,
+            LightEnergy = 0.22f,
             ShadowEnabled = false
         };
         AddChild(fill);

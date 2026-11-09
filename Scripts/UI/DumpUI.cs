@@ -6,6 +6,9 @@ namespace TrashPcTycoon.UI;
 /// <summary>Минимальный интерфейс локации «Свалка» (2.0): касса, инвентарь, уехать/вернуться.</summary>
 public partial class DumpUI : CanvasLayer
 {
+    /// <summary>3.0/Модуль 2: клик любой кнопки свалки (для звука).</summary>
+    public event Action? ButtonClicked;
+
     public event Action? BackToGaragePressed;
     public event Action? RefreshDumpPressed;
     public event Action? DigPressed;
@@ -69,10 +72,29 @@ public partial class DumpUI : CanvasLayer
         dig.Pressed += () => DigPressed?.Invoke();
         AddChild(dig);
 
+        WireButtonClicks();
         var hint = MakeLabel("Тапай по кучам — копай • Куча пустеет • Тяни экран — камера", 18);
         hint.SetAnchorsPreset(Control.LayoutPreset.BottomLeft);
         hint.Position = new Vector2(18, -40);
         AddChild(hint);
+    }
+
+    private void WireButtonClicks()
+    {
+        WireClicksRecursive(this);
+    }
+
+    private void WireClicksRecursive(Node node)
+    {
+        if (node is Button button)
+        {
+            button.Pressed += () => ButtonClicked?.Invoke();
+        }
+
+        foreach (Node child in node.GetChildren())
+        {
+            WireClicksRecursive(child);
+        }
     }
 
     public void Bind(GameState state)

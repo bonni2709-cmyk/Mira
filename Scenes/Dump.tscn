@@ -12,6 +12,12 @@ background_color = Color(0.45, 0.4, 0.33, 1)
 ambient_light_source = 2
 ambient_light_color = Color(0.6, 0.55, 0.45, 1)
 ambient_light_energy = 0.7
+ssao_enabled = true
+ssao_radius = 1.2
+ssao_intensity = 1.6
+adjustment_enabled = true
+adjustment_contrast = 1.06
+adjustment_saturation = 1.05
 
 [sub_resource type="StandardMaterial3D" id="Material_dirt"]
 albedo_color = Color(0.32, 0.26, 0.19, 1)

@@ -40,6 +40,7 @@ public partial class DumpLocation : Node3D
 
     public override void _Ready()
     {
+        AddChild(VignetteOverlay.Create());
         // 3.0/Модуль 1: WorldEnvironment, солнце и пол живут прямо в Dump.tscn —
         // сцена видна даже если код декора проснётся позже. Код добавляет только горы, лужи, машину и собак.
         BuildGroundAndMountains();
@@ -60,6 +61,7 @@ public partial class DumpLocation : Node3D
         _ui.BackToGaragePressed += () => GetTree().ChangeSceneToFile("res://Scenes/Main.tscn");
         _ui.RefreshDumpPressed += () => GetTree().ReloadCurrentScene();
         _ui.DigPressed += DigRandomHeap;
+        _ui.ButtonClicked += () => _sound.PlayClick();
         UpdateHeapsStatus();
         _ui.SetMessage("Приехал на свалку. Собаки делают вид, что ты не интересен. Тапай по кучам!");
 

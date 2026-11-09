@@ -10,25 +10,37 @@ namespace TrashPcTycoon;
 /// </summary>
 public static class PixelTextureFactory
 {
-    private const int Size = 64;
+    // 3.0/Модуль 2: текстуры выросли 64 -> 128, к альбедо добавились нормал-мапы из той же высоты.
+    private const int Size = 128;
 
     public static StandardMaterial3D Concrete() =>
-        MakeMaterial(BaseColor: new Color(0.42f, 0.40f, 0.37f), seed: 11, speckles: 260, cracks: 4);
+        MakeMaterial(BaseColor: new Color(0.42f, 0.40f, 0.37f), seed: 11, speckles: 620, cracks: 4);
 
     public static StandardMaterial3D Wall() =>
-        MakeMaterial(BaseColor: new Color(0.46f, 0.42f, 0.34f), seed: 23, speckles: 200, cracks: 7);
+        MakeMaterial(BaseColor: new Color(0.46f, 0.42f, 0.34f), seed: 23, speckles: 480, cracks: 7);
 
     public static StandardMaterial3D RustMetal() =>
-        MakeMaterial(BaseColor: new Color(0.48f, 0.36f, 0.24f), seed: 37, speckles: 420, cracks: 2);
+        MakeMaterial(BaseColor: new Color(0.48f, 0.36f, 0.24f), seed: 37, speckles: 1000, cracks: 2);
 
     public static StandardMaterial3D DarkMetal() =>
-        MakeMaterial(BaseColor: new Color(0.32f, 0.33f, 0.33f), seed: 41, speckles: 240, cracks: 3);
+        MakeMaterial(BaseColor: new Color(0.32f, 0.33f, 0.33f), seed: 41, speckles: 580, cracks: 3);
 
     public static StandardMaterial3D Cardboard() =>
-        MakeMaterial(BaseColor: new Color(0.62f, 0.46f, 0.27f), seed: 53, speckles: 150, cracks: 1);
+        MakeMaterial(BaseColor: new Color(0.62f, 0.46f, 0.27f), seed: 53, speckles: 360, cracks: 1);
 
     public static StandardMaterial3D Wood() =>
-        MakeMaterial(BaseColor: new Color(0.45f, 0.32f, 0.18f), seed: 67, speckles: 180, cracks: 5);
+        MakeMaterial(BaseColor: new Color(0.45f, 0.32f, 0.18f), seed: 67, speckles: 430, cracks: 5);
+
+    /// <summary>Корпус ПК: родной цвет, щедро тронутый ржавчиной (3.0/Модуль 2).</summary>
+    public static StandardMaterial3D RustedTint(Color tint)
+    {
+        var rusty = new Color(0.48f, 0.36f, 0.24f);
+        var mixed = new Color(
+            tint.R * 0.5f + rusty.R * 0.5f,
+            tint.G * 0.5f + rusty.G * 0.5f,
+            tint.B * 0.5f + rusty.B * 0.5f);
+        return MakeMaterial(BaseColor: mixed, seed: 97, speckles: 1150, cracks: 3);
+    }
 
     public static StandardMaterial3D Flat(Color color, float roughness = 0.95f)
     {
@@ -81,9 +93,40 @@ public static class PixelTextureFactory
         return new StandardMaterial3D
         {
             AlbedoTexture = texture,
+            NormalTexture = ImageTexture.CreateFromImage(BuildNormalMap(image)),
+            NormalScale = 0.7f,
             Roughness = 1.0f,
             TextureFilter = BaseMaterial3D.TextureFilterEnum.Nearest,
             Uv1Scale = new Vector3(2.0f, 2.0f, 2.0f)
         };
+    }
+
+    /// <summary>
+    /// Нормал-мапа из яркости той же текстуры (высота = светлота пикселя).
+    /// Текстуры статичны и генерируются один раз, поэтому FPS это не трогает вообще,
+    /// а ржавчина и обшарпанность начинают ловить свет лампочки объёмом.
+    /// </summary>
+    private static Image BuildNormalMap(Image source)
+    {
+        Image normal = Image.CreateEmpty(Size, Size, false, Image.Format.Rgb8);
+
+        float HeightAt(int x, int y)
+        {
+            Color c = source.GetPixel(Mathf.Clamp(x, 0, Size - 1), Mathf.Clamp(y, 0, Size - 1));
+            return (c.R + c.G + c.B) / 3f;
+        }
+
+        for (int y = 0; y < Size; y++)
+        {
+            for (int x = 0; x < Size; x++)
+            {
+                float dx = HeightAt(x - 1, y) - HeightAt(x + 1, y);
+                float dy = HeightAt(x, y - 1) - HeightAt(x, y + 1);
+                var n = new Vector3(dx * 2.2f, dy * 2.2f, 1f).Normalized();
+                normal.SetPixel(x, y, new Color(n.X * 0.5f + 0.5f, n.Y * 0.5f + 0.5f, n.Z * 0.5f + 0.5f));
+            }
+        }
+
+        return normal;
     }
 }

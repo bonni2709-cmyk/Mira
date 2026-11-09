@@ -53,6 +53,7 @@ public partial class Main : Node3D
     public override void _Ready()
     {
         BuildEnvironment();
+        AddChild(VignetteOverlay.Create());
 
         _state = GetNode<GameState>("/root/GameState");
         _ui = GetNode<MainUI>("UI");
@@ -153,6 +154,7 @@ public partial class Main : Node3D
         };
         _ui.BuyGaragePressed += OnBuyGaragePressed;
         _ui.GoToDumpPressed += OnGoToDump;
+        _ui.ButtonClicked += () => _sound.PlayClick();
         _ui.MayoApplied += OnMayoApplied;
         _ui.CoolTapPressed += () =>
         {
@@ -1042,11 +1044,19 @@ public partial class Main : Node3D
     {
         var environment = new Godot.Environment
         {
-            BackgroundColor = new Color(0.07f, 0.06f, 0.05f),
-            AmbientLightColor = new Color(0.55f, 0.48f, 0.38f),
-            AmbientLightEnergy = 0.55f,
+            BackgroundColor = new Color(0.05f, 0.045f, 0.04f),
+            AmbientLightColor = new Color(0.50f, 0.44f, 0.34f),
+            AmbientLightEnergy = 0.34f,
             GlowEnabled = false,
-            FogEnabled = false
+            FogEnabled = false,
+            // 3.0/Модуль 2: SSAO на Forward-рендере добавит контактной глубины;
+            // на мобильном Compatibility Godot его честно игнорирует, FPS не страдает.
+            SsaoEnabled = true,
+            SsaoRadius = 1.2f,
+            SsaoIntensity = 1.6f,
+            AdjustmentEnabled = true,
+            AdjustmentContrast = 1.06f,
+            AdjustmentSaturation = 1.05f
         };
         // Режимы фона и рассеянного света: 1 = Color у background_mode, 2 = Color у ambient_light_source.
         // Через Set(), чтобы не зависеть от имён вложенных enum в биндингах GodotSharp.

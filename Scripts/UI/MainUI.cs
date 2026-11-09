@@ -35,6 +35,10 @@ public partial class MainUI : CanvasLayer
     public event Action<int>? BuyGaragePressed;
     /// <summary>2.0: поехать на отдельную локацию «Свалка».</summary>
     public event Action? GoToDumpPressed;
+    /// <summary>3.0/Модуль 2: клик любой кнопки интерфейса (для звука).</summary>
+    public event Action? ButtonClicked;
+
+    private readonly System.Collections.Generic.HashSet<Button> _clickWired = new();
     /// <summary>2.0: результат мини-игры майонеза (покрытие %, потёки %).</summary>
     public event Action<float, float>? MayoApplied;
     /// <summary>2.0: тап «Охладить» в интерактивном тесте Киберпанка.</summary>
@@ -181,6 +185,25 @@ public partial class MainUI : CanvasLayer
         cool.AddThemeFontSizeOverride("font_size", 24);
         cool.Pressed += () => CoolTapPressed?.Invoke();
         content.AddChild(cool);
+    }
+
+    /// <summary>Вешает звук клика на все кнопки, включая динамически пересоздаваемые списки.</summary>
+    private void WireButtonClicks()
+    {
+        WireClicksRecursive(this);
+    }
+
+    private void WireClicksRecursive(Node node)
+    {
+        if (node is Button button && _clickWired.Add(button))
+        {
+            button.Pressed += () => ButtonClicked?.Invoke();
+        }
+
+        foreach (Node child in node.GetChildren())
+        {
+            WireClicksRecursive(child);
+        }
     }
 
     public void Bind(GameState state)
@@ -411,6 +434,7 @@ public partial class MainUI : CanvasLayer
 
     private void RefreshInventory()
     {
+        WireButtonClicks();
         _inventoryCountLabel.Text = $"Деталей: {_state.Inventory.Count}/{_state.InventoryCapacity}";
         foreach (Node child in _inventoryList.GetChildren())
         {
@@ -420,6 +444,7 @@ public partial class MainUI : CanvasLayer
         if (_state.Inventory.Count == 0)
         {
             _inventoryList.AddChild(MakeLabel("Пока пусто. Свалка сама себя не разберёт.", 20));
+            WireButtonClicks();
             return;
         }
 
@@ -444,6 +469,8 @@ public partial class MainUI : CanvasLayer
             _inventoryList.AddChild(row);
             _inventoryList.AddChild(new HSeparator());
         }
+
+        WireButtonClicks();
     }
 
     private void BuildHud()
