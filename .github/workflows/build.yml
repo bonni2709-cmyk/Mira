@@ -201,6 +201,8 @@ jobs:
           cd android/build
           "$HOME/jdk/bin/jar" xf "$TEMPLATES/android_source.zip"
           cd ../..
+          printf '%s\n' "${GODOT_VERSION}.stable.mono" > android/.build_version
+          printf '\n' > android/build/.gdignore
           {
             echo "=== android tree ==="
             find android -maxdepth 2 | head -n 40
