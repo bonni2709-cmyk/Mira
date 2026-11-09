@@ -71,8 +71,7 @@ public partial class Main : Node3D
 
         _ui.Bind(_state);
         _ui.PlayPressed += OnPlayPressed;
-        // 3.0/Модуль 1: гаража-кучи больше нет — кнопка везёт на отдельную локацию «Свалка».
-        _ui.DigPressed += OnGoToDump;
+
         _ui.BuyBoxPressed += OnBuyBoxPressed;
         _ui.OpenBoxPressed += OpenDeliveryBox;
         _ui.SellPartPressed += OnSellPartPressed;
@@ -763,7 +762,7 @@ public partial class Main : Node3D
         _sensors.StartMicrophone();
         _ui.ShowGame();
         _ui.SetSensorStatus(_sensors.Status);
-        _ui.SetMessage("Жми «КОПАТЬ НА СВАЛКЕ» справа внизу — уезжаем за стартовым капиталом. Буквально.");
+        _ui.SetMessage("Жми «Свалка» на нижней панели — уезжаем за стартовым капиталом. Буквально.");
     }
 
     private void OnBuyBoxPressed()

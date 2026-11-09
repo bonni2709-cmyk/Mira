@@ -11,7 +11,6 @@ namespace TrashPcTycoon.UI;
 public partial class MainUI : CanvasLayer
 {
     public event Action? PlayPressed;
-    public event Action? DigPressed;
     public event Action? BuyBoxPressed;
     public event Action? OpenBoxPressed;
     public event Action<PcPart>? SellPartPressed;
@@ -387,10 +386,8 @@ public partial class MainUI : CanvasLayer
 
     public void SetPasteState(float paste01, bool active)
     {
-        _pasteLabel.Text = active
-            ? $"РЕЖИМ МАЙОНЕЗА: води пальцем по процессору… нанесено {Mathf.RoundToInt(paste01 * 100)}%"
-            : $"Майонез на процессоре: {Mathf.RoundToInt(paste01 * 100)}% (нужно 70%+)";
-        _pasteButton.Text = active ? "Майонез: ВКЛ (води по CPU!)" : "Намазать майонез";
+        _pasteLabel.Text = $"Майонез на процессоре: {Mathf.RoundToInt(paste01 * 100)}% (норма 70–90%, за край не выезжай)";
+        _pasteButton.Text = "Намазать майонез (мини-игра)";
     }
 
     public void SetSensorStatus(string text)
@@ -522,82 +519,78 @@ public partial class MainUI : CanvasLayer
         _hud.MouseFilter = Control.MouseFilterEnum.Ignore;
         AddChild(_hud);
 
+        // 4.0/Модуль 1: верх — только статусная строка без единой кнопки навигации.
         var topBar = new PanelContainer();
         topBar.SetAnchorsPreset(Control.LayoutPreset.TopWide);
         topBar.AddThemeStyleboxOverride("panel", MakePanelStyle());
         _hud.AddChild(topBar);
 
-        // 3.0/Модуль 1: кнопок стало много — верхнее меню теперь горизонтально прокручивается свайпом.
-        var topScroll = new ScrollContainer
-        {
-            HorizontalScrollMode = ScrollContainer.ScrollMode.ShowNever,
-            VerticalScrollMode = ScrollContainer.ScrollMode.Disabled
-        };
-        topBar.AddChild(topScroll);
-
         var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 14);
-        topScroll.AddChild(row);
+        row.AddThemeConstantOverride("separation", 16);
+        topBar.AddChild(row);
 
-        _moneyLabel = MakeLabel("Деньги: 0 ₽", 26);
+        _moneyLabel = MakeLabel("Деньги: 0 ₽", 24);
         row.AddChild(_moneyLabel);
-        _inventoryCountLabel = MakeLabel("Деталей: 0", 26);
+        _inventoryCountLabel = MakeLabel("Деталей: 0", 24);
         row.AddChild(_inventoryCountLabel);
-        _heatLabel = MakeLabel("ПК: 34°C", 26);
+        _heatLabel = MakeLabel("ПК: 34°C", 24);
         row.AddChild(_heatLabel);
-        _reputationLabel = MakeLabel("Репутация: 2.0/5 (40) • Гараж ур. 1", 22);
+        _reputationLabel = MakeLabel("Репутация: 2.0/5 (40) • Гараж ур. 1", 20);
         row.AddChild(_reputationLabel);
 
         var spacer = new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         row.AddChild(spacer);
 
-        Button build = MakeButton("СБОРКА");
-        build.Pressed += OpenBuildPanel;
-        row.AddChild(build);
+        // Угол экрана: только «сохранить» и «меню». Навигация вся внизу.
+        Button save = MakeButton("💾");
+        save.TooltipText = "Сохранить";
+        save.CustomMinimumSize = new Vector2(56, 44);
+        save.Pressed += () => SavePressed?.Invoke();
+        row.AddChild(save);
 
-        Button client = MakeButton("Клиент");
-        client.Pressed += () =>
+        Button menu = MakeButton("☰");
+        menu.TooltipText = "Меню";
+        menu.CustomMinimumSize = new Vector2(56, 44);
+        menu.Pressed += ShowMenu;
+        row.AddChild(menu);
+
+        // 4.0/Модуль 1: Bottom Navigation Bar — 5 крупных кнопок, дотягивается большой палец.
+        var navBar = new PanelContainer();
+        navBar.SetAnchorsPreset(Control.LayoutPreset.BottomWide);
+        navBar.AddThemeStyleboxOverride("panel", MakePanelStyle());
+        _hud.AddChild(navBar);
+
+        var nav = new HBoxContainer();
+        nav.AddThemeConstantOverride("separation", 10);
+        navBar.AddChild(nav);
+
+        Button navBuild = MakeNavButton("🔧\nСборка");
+        navBuild.Pressed += OpenBuildPanel;
+        nav.AddChild(navBuild);
+
+        Button navClient = MakeNavButton("🧑\nКлиент");
+        navClient.Pressed += () =>
         {
             SummonClientPressed?.Invoke();
             OpenClientPanel();
         };
-        row.AddChild(client);
+        nav.AddChild(navClient);
 
-        Button save = MakeButton("Сохранить");
-        save.Pressed += () => SavePressed?.Invoke();
-        row.AddChild(save);
+        Button navShop = MakeNavButton("🛒\nМагазин");
+        navShop.Pressed += () => TogglePanel(_shopPanel);
+        nav.AddChild(navShop);
 
-        Button shop = MakeButton("Магазин AliExpress");
-        shop.Pressed += () => TogglePanel(_shopPanel);
-        row.AddChild(shop);
+        Button navDump = MakeNavButton("🗑️\nСвалка");
+        navDump.Pressed += () => GoToDumpPressed?.Invoke();
+        nav.AddChild(navDump);
 
-        Button dump = MakeButton("Поехать на свалку");
-        dump.Pressed += () => GoToDumpPressed?.Invoke();
-        row.AddChild(dump);
-
-        Button inventory = MakeButton("Инвентарь");
-        inventory.Pressed += () => TogglePanel(_inventoryPanel);
-        row.AddChild(inventory);
-
-        Button help = MakeButton("Как играть");
-        help.Pressed += () => _helpPanel.Visible = true;
-        row.AddChild(help);
-
-        Button menu = MakeButton("Меню");
-        menu.Pressed += ShowMenu;
-        row.AddChild(menu);
-
-        var digButton = MakeButton("КОПАТЬ НА СВАЛКЕ");
-        digButton.SetAnchorsPreset(Control.LayoutPreset.BottomRight);
-        digButton.Position = new Vector2(-330, -110);
-        digButton.Size = new Vector2(310, 78);
-        digButton.AddThemeFontSizeOverride("font_size", 26);
-        digButton.Pressed += () => DigPressed?.Invoke();
-        _hud.AddChild(digButton);
+        Button navInventory = MakeNavButton("🎒\nИнвентарь");
+        navInventory.Pressed += () => TogglePanel(_inventoryPanel);
+        nav.AddChild(navInventory);
 
         var hint = MakeLabel("Тап по куче — копать • Тяни — камера / деталь / майонез • Тряхни телефон — проверка на «отвалилось»", 18);
         hint.SetAnchorsPreset(Control.LayoutPreset.BottomLeft);
-        hint.Position = new Vector2(18, -42);
+        hint.Position = new Vector2(18, -136);
         _hud.AddChild(hint);
     }
 
@@ -665,13 +658,15 @@ public partial class MainUI : CanvasLayer
         _helpPanel = MakeSidePanel("Как играть");
         VBoxContainer content = GetPanelContent(_helpPanel);
         content.AddChild(MakeWrapped(
-            "СВАЛКА И МАГАЗИН (Модуль 1)\n" +
-            "Тапай по куче мусора — выкапывай детали. В магазине заказывай коробку AliExpress за 150 ₽ и вскрывай тапом по коробке на верстаке.\n\n" +
+            "НАВИГАЦИЯ (Обновление 4.0)\n" +
+            "Внизу экрана — панель на пять кнопок: Сборка, Клиент, Магазин, Свалка и Инвентарь. Сохранить и меню — в правом верхнем углу (💾 и ☰).\n\n" +
+            "СВАЛКА И МАГАЗИН\n" +
+            "Кнопка «Свалка» внизу уезжает на отдельную локацию: тапай по кучам мусора — выкапывай детали, кучи пустеют, собаки наблюдают. В магазине заказывай коробку AliExpress за 150 ₽ и вскрывай тапом по коробке на верстаке.\n\n" +
             "СБОРКА (Модуль 2)\n" +
             "1. «Инвентарь» → «На стол» у детали, затем тапни/проведи по столу сборки в центре гаража — деталь встанет туда.\n" +
             "2. Сначала нужен корпус, потом материнка, процессор, кулер, блок питания и память.\n" +
             "3. Не влезла? Тапни по ней и жми «МОЛОТОК». Два удара — и геометрия сдастся (но греться будет сильнее).\n" +
-            "4. Майонез: кнопка «Намазать майонез», затем води пальцем по процессору на столе.\n" +
+            "4. Майонез: кнопка «Намазать майонез (мини-игра)» открывает процессор сверху. Зажми и води: норма — покрыть 70–90% крышки. Выедешь за край на материнку — при тесте короткое замыкание и взрыв.\n" +
             "5. Продувка: дуй в микрофон телефона (или зажми кнопку «Дуть») — пыль долой, температура ниже.\n" +
             "6. Тряхни телефон — узнаешь, что там гремит. Иногда деталь вылетает. Честная диагностика.\n" +
             "7. «СТАРТ ТЕСТА»: 30 секунд. 88°C — вибрирует и дымит, 100°C — всё, приехали. Дуй, чтобы выжить!\n\n" +
@@ -964,6 +959,16 @@ public partial class MainUI : CanvasLayer
         button.AddThemeStyleboxOverride("hover", hover);
         button.AddThemeStyleboxOverride("pressed", hover);
         button.AddThemeStyleboxOverride("disabled", disabled);
+        return button;
+    }
+
+    /// <summary>Крупная кнопка нижней навигации (4.0): иконка сверху, подпись снизу, тянется на всю долю ширины.</summary>
+    private static Button MakeNavButton(string text)
+    {
+        Button button = MakeButton(text);
+        button.CustomMinimumSize = new Vector2(0, 74);
+        button.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        button.AddThemeFontSizeOverride("font_size", 20);
         return button;
     }
 
