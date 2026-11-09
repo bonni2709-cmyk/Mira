@@ -48,6 +48,8 @@ public partial class Main : Node3D
         _build = GetNode<BuildController>("BuildController");
         _heat = GetNode<HeatSystem>("HeatSystem");
         _sensors = GetNode<AndroidSensors>("AndroidSensors");
+        _client = GetNode<ClientController>("Client");
+        _sound = GetNode<SoundSystem>("SoundSystem");
 
         _heat.Bind(_build);
 
@@ -64,7 +66,79 @@ public partial class Main : Node3D
         _ui.BlowButtonDown += () => _blowHeld = true;
         _ui.BlowButtonUp += () => _blowHeld = false;
         _ui.StartTestPressed += OnStartTestPressed;
-        _ui.StopTestPressed += () => _heat.StopTest("Тест остановлен вручную. ПК выдохнул с облегчением.");
+        _ui.StopTestPressed += () =>
+        {
+            bool wasChallenge = _challengeRunning;
+            _challengeRunning = false;
+            _heat.StopTest(wasChallenge
+                ? "Запуск Киберпанка прерван вручную. Клиент делает вид, что ничего не видел."
+                : "Тест остановлен вручную. ПК выдохнул с облегчением.");
+        };
+        _ui.SavePressed += () => SaveGame(announce: true);
+        _ui.BuyToolPressed += OnBuyToolPressed;
+        _ui.SummonClientPressed += () =>
+        {
+            if (_clientStage == ClientStage.None)
+            {
+                SpawnClient();
+            }
+        };
+        _ui.ClientNextPressed += () =>
+        {
+            if (_clientStage == ClientStage.Intro)
+            {
+                _clientStage = ClientStage.Request;
+                _client.Say("Киберпанк. Ультра. Ну пожалуйста.");
+                UpdateClientUi();
+            }
+        };
+        _ui.AcceptOrderPressed += () =>
+        {
+            if (_clientStage != ClientStage.Request)
+            {
+                return;
+            }
+
+            _clientStage = ClientStage.WaitingBuild;
+            _client.Say("Жду! Только не как почта, ладно?");
+            _ui.SetMessage("Заказ принят. Собирай ПК, мажь майонез, продувай пыль — потом «Запустить Киберпанк» в панели клиента.");
+            UpdateClientUi();
+        };
+        _ui.LaunchCyberpunkPressed += OnLaunchCyberpunk;
+        _ui.SellPcPressed += OnSellPc;
+        _ui.RejectClientPressed += () =>
+        {
+            if (_clientData == null)
+            {
+                return;
+            }
+
+            _client.Leave(false);
+            _clientData = null;
+            _clientStage = ClientStage.None;
+            _nextClientTimer = 25f;
+            _ui.SetMessage("Клиент ушёл мечтать дальше. Следующий найдётся — гараж пахнет возможностями.");
+            UpdateClientUi();
+        };
+        _ui.OpenCasePressed += () =>
+        {
+            if (!_heat.IsRunning)
+            {
+                _ui.SetMessage("Корпус и так открыт для всех ветров. Охлаждать нечего.");
+                return;
+            }
+
+            if (_openCaseCooldown > 0f)
+            {
+                _ui.SetMessage($"Крышка ещё «отдыхает» {_openCaseCooldown:0} сек. Постучи по столу от нетерпения.");
+                return;
+            }
+
+            _openCaseCooldown = 20f;
+            _heat.ApplyInstantCooling(12f);
+            _sound.PlayCreak();
+            _ui.SetMessage("Крышка сорвана! -12°C. Где-то в углу заплакал один гарантийный стикер.");
+        };
 
         _heat.TemperatureChanged += (celsius, left, running) => _ui.SetTemperature(celsius, left, running);
         _heat.CriticalTemperature += celsius =>
@@ -156,6 +230,232 @@ public partial class Main : Node3D
                 _cameraRig.Zoom(1.0f);
                 break;
         }
+    }
+
+    // ---------- Модуль 3: клиенты, инструменты, сохранения ----------
+
+    private void SpawnClient()
+    {
+        if (_clientStage != ClientStage.None)
+        {
+            return;
+        }
+
+        _clientData = ClientCatalog.CreateRandom(_rng);
+        _clientStage = ClientStage.Intro;
+        _nextClientTimer = -1f;
+        _client.Arrive(_clientData);
+        _sound.PlayCreak();
+        _ui.SetMessage($"В гараж зашёл клиент: {_clientData.Name}. Открой панель «Клиент» — у него мечта и копилка.");
+        UpdateClientUi();
+    }
+
+    private int ComputeSalePriceRub()
+    {
+        return (int)(_build.GetTotalValueRub() * 1.6f) + 250;
+    }
+
+    private void UpdateClientUi()
+    {
+        string stats = $"Продано ПК: {_state.ComputersSold} • Заработано всего: {_state.TotalEarnedRub} ₽";
+        switch (_clientStage)
+        {
+            case ClientStage.None:
+                _ui.SetClientDialogue("Клиента нет",
+                    "У прилавка пусто. Клиенты приходят сами (первый — секунд через шесть после старта) или зови кнопкой «Клиент» вверху.",
+                    stats, false, false, false, false, false);
+                break;
+
+            case ClientStage.Intro when _clientData != null:
+                _ui.SetClientDialogue(_clientData.Name, _clientData.IntroLine,
+                    $"Бюджет копилки: около {_clientData.BudgetRub} ₽. {stats}",
+                    true, false, false, false, true);
+                break;
+
+            case ClientStage.Request when _clientData != null:
+                _ui.SetClientDialogue(_clientData.Name, ClientCatalog.RequestLine,
+                    $"Бюджет: {_clientData.BudgetRub} ₽. {stats}",
+                    false, true, false, false, true);
+                break;
+
+            case ClientStage.WaitingBuild when _clientData != null:
+                var missing = _build.GetMissingEssentials();
+                string status = missing.Count == 0
+                    ? $"Сборка готова! Цена для клиента: {ComputeSalePriceRub()} ₽ (бюджет {_clientData.BudgetRub} ₽). Запускай Киберпанк."
+                    : $"Собираем… не хватает: {string.Join(", ", missing)}. Цена будет около {ComputeSalePriceRub()} ₽.";
+                _ui.SetClientDialogue(_clientData.Name, ClientCatalog.WaitingLine, status,
+                    false, false, missing.Count == 0 && !_heat.IsRunning, false, true);
+                break;
+
+            case ClientStage.ChallengePassed when _clientData != null:
+                _ui.SetClientDialogue(_clientData.Name,
+                    "ОНО РАБОТАЕТ. Киберпанк. У меня. Скажи цену, только не громко — сердце стучит, как твой HDD.",
+                    $"Цена: {ComputeSalePriceRub()} ₽, бюджет клиента {_clientData.BudgetRub} ₽. Жми «Продать ПК».",
+                    false, false, false, true, false);
+                break;
+        }
+    }
+
+    private void OnLaunchCyberpunk()
+    {
+        if (_clientStage != ClientStage.WaitingBuild)
+        {
+            return;
+        }
+
+        if (_heat.StartChallenge(out string error))
+        {
+            _challengeRunning = true;
+            _sound.SetFan(true);
+            _client.Say("Это он? Это КИБЕРПАНК?!");
+            _ui.OpenBuildPanel();
+            _ui.SetMessage("КИБЕРПАНК ЗАПУЩЕН ПРИ КЛИЕНТЕ! 60 секунд: дуй в микрофон, открывай корпус, не дай дойти до 100°C!");
+        }
+        else
+        {
+            _ui.SetMessage(error);
+        }
+
+        UpdateClientUi();
+    }
+
+    private void OnTestFinished(bool survived, string summary)
+    {
+        _sound.SetFan(false);
+        bool wasChallenge = _challengeRunning;
+        _challengeRunning = false;
+
+        if (wasChallenge && survived && _clientData != null)
+        {
+            _clientStage = ClientStage.ChallengePassed;
+            _client.Say("ШЕСТЬДЕСЯТ СЕКУНД! ОНО ЖИВО!");
+            _sound.PlayCash();
+            _ui.SetMessage(summary + " Теперь жми «Продать ПК» в панели клиента.");
+        }
+        else if (wasChallenge && !survived && _clientData != null)
+        {
+            _sound.PlayExplosion();
+            _sound.PlayFail();
+            PcPart? burned = _build.BurnRandomPart();
+            _client.Leave(false);
+            _clientData = null;
+            _clientStage = ClientStage.None;
+            _nextClientTimer = 30f;
+            _ui.SetMessage(summary + (burned != null
+                ? $" Сгорела деталь: «{burned.Name}». Клиент ушёл к другому дяде. Быстро ушёл."
+                : " Клиент ушёл к другому дяде."));
+            SaveGame();
+        }
+        else
+        {
+            if (!survived)
+            {
+                _sound.PlayExplosion();
+            }
+
+            _ui.SetMessage(summary);
+        }
+
+        RefreshBuildUi();
+        UpdateClientUi();
+    }
+
+    private void OnSellPc()
+    {
+        if (_clientStage != ClientStage.ChallengePassed || _clientData == null)
+        {
+            return;
+        }
+
+        int price = ComputeSalePriceRub();
+        int paid = price <= _clientData.BudgetRub
+            ? price
+            : _clientData.BudgetRub + _rng.Next(0, 81);
+        string note = price <= _clientData.BudgetRub
+            ? $"Клиент заплатил {paid} ₽, как договаривались. Даже сдачу не пересчитывал."
+            : $"Цена {price} ₽ оказалась выше копилки, клиент отдал всё: {paid} ₽ (с мелочью из карманов).";
+
+        _state.AddMoney(paid);
+        _state.RegisterSale();
+        _build.ClearBuild();
+        _sound.PlayCash();
+        Input.VibrateHandheld(60);
+        _client.Leave(true);
+        _clientData = null;
+        _clientStage = ClientStage.None;
+        _nextClientTimer = 25f;
+        _ui.SetMessage($"ПК ПРОДАН! {note} Стол пуст — время собирать следующее чудо.");
+        SaveGame();
+        RefreshBuildUi();
+        UpdateClientUi();
+    }
+
+    private void OnBuyToolPressed(string toolId)
+    {
+        ToolsCatalog.ToolDef? def = ToolsCatalog.Find(toolId);
+        if (def == null)
+        {
+            return;
+        }
+
+        if (_state.OwnsTool(toolId))
+        {
+            _ui.SetMessage($"«{def.Name}» уже твой. Два молотка — это уже арсенал, а не гараж.");
+            return;
+        }
+
+        if (!_state.BuyTool(toolId, def.PriceRub))
+        {
+            _ui.SetMessage($"На «{def.Name}» не хватает. Копай, продавай, возвращайся — классический бизнес-план.");
+            return;
+        }
+
+        ApplyToolEffects();
+        _sound.PlayPop();
+        _ui.SetMessage($"Куплено: {def.Name}! {def.Description}");
+        SaveGame();
+    }
+
+    private void ApplyToolEffects()
+    {
+        _build.HammerHitsRequired = _state.OwnsTool(ToolsCatalog.BetterHammer) ? 1 : 2;
+        _build.BlowDustMultiplier = _state.OwnsTool(ToolsCatalog.Vacuum) ? 2.0f : 1.0f;
+        _build.HasRealPaste = _state.OwnsTool(ToolsCatalog.RealPaste);
+        _heat.PassiveCoolingPerSecond = _state.OwnsTool(ToolsCatalog.DeskFan) ? 1.6f : 0f;
+    }
+
+    private void SaveGame(bool announce = false)
+    {
+        SaveSystem.Save(_state, _build);
+        if (announce)
+        {
+            _sound.PlayPop();
+            _ui.SetMessage("Прогресс сохранён: деньги, детали, стол сборки и инструменты — всё записано в тетрадку гаража.");
+        }
+    }
+
+    private void LoadGame()
+    {
+        SaveSystem.SaveData? data = SaveSystem.Load();
+        if (data == null)
+        {
+            return;
+        }
+
+        var inventory = new System.Collections.Generic.List<PcPart>();
+        foreach (SaveSystem.PartDto dto in data.Inventory)
+        {
+            inventory.Add(SaveSystem.FromDto(dto));
+        }
+
+        _state.Restore(data.Money, inventory, data.Tools, data.ComputersSold, data.TotalEarnedRub);
+        foreach (SaveSystem.InstalledDto installed in data.Installed)
+        {
+            _build.RestoreInstalled(SaveSystem.FromDto(installed.Part), installed.NeedsHammer,
+                installed.Hammered, installed.HammerHits, installed.Dust01, installed.Paste01);
+        }
+
+        GD.Print("Trash-PC Tycoon: сейв загружен.");
     }
 
     // ---------- Модуль 1: свалка и магазин ----------
@@ -322,6 +622,7 @@ public partial class Main : Node3D
     {
         if (_heat.StartTest(out string error))
         {
+            _sound.SetFan(true);
             _ui.SetMessage("ТЕСТ ЗАПУЩЕН! Вентилятор взвыл, HDD застучал, температура полезла вверх. Дуй, если запахнет жареным.");
         }
         else

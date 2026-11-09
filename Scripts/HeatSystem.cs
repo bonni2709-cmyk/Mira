@@ -29,6 +29,14 @@ public partial class HeatSystem : Node
     public float SecondsLeft { get; private set; }
     public bool IsRunning { get; private set; }
 
+    /// <summary>Режим «Киберпанк при клиенте»: 60 секунд под повышенной нагрузкой (Модуль 3).</summary>
+    public bool InChallenge { get; private set; }
+    public const float ChallengeDurationSeconds = 60.0f;
+    public const float ChallengeLoadMultiplier = 1.35f;
+
+    /// <summary>Комнатный вентилятор из магазина инструментов: дует всегда, не устаёт.</summary>
+    public float PassiveCoolingPerSecond { get; set; }
+
     public void Bind(BuildController build)
     {
         _build = build;

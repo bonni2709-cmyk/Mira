@@ -43,6 +43,13 @@ jobs:
           fi
           ls "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable.mono"
 
+      - name: Regenerate pixel app icon (Pillow)
+        continue-on-error: true
+        run: |
+          python3 -m pip install --quiet pillow \
+            && python3 Tools/generate_icon.py \
+            || echo "Icon regeneration skipped - using committed icon.png / android_icons"
+
       - name: Import project
         run: |
           cd "$PROJECT_PATH"

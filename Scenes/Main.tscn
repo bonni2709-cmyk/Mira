@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://trashpcmain001"]
+[gd_scene load_steps=12 format=3 uid="uid://trashpcmain001"]
 
 [ext_resource type="Script" path="res://Scripts/Main.cs" id="1_main"]
 [ext_resource type="Script" path="res://Scripts/IsoCameraRig.cs" id="2_cam"]

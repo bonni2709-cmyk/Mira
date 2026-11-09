@@ -9,7 +9,7 @@ config/name="Trash-PC Tycoon 3D"
 config/description="Комедийный 3D-симулятор: собери ПК из мусора и продай, пока он не сгорел. Pixel 3D, грязный гараж, никакой неоновой мишуры."
 run/main_scene="res://Scenes/Main.tscn"
 config/features=PackedStringArray("4.3", "C#", "Mobile")
-config/icon="res://icon.svg"
+config/icon="res://icon.png"
 boot_splash/bg_color=Color(0.09, 0.075, 0.06, 1)
 
 [autoload]

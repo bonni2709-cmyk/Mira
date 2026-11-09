@@ -320,7 +320,7 @@ public partial class BuildController : Node3D
             }
 
             anyDust = true;
-            entry.Dust01 = Mathf.Max(0f, entry.Dust01 - (float)delta * 0.45f);
+            entry.Dust01 = Mathf.Max(0f, entry.Dust01 - (float)delta * 0.45f * BlowDustMultiplier);
             entry.DustVisual.Scale = Vector3.One * Mathf.Max(0.03f, entry.Dust01);
             if (_rng.NextDouble() < delta * 6.0)
             {
@@ -496,6 +496,100 @@ public partial class BuildController : Node3D
         string paste = entry.Part.Type == PartType.Cpu
             ? $", майонез: {Mathf.RoundToInt(entry.Paste01 * 100)}%" : "";
         return $"{entry.Part.TypeName}: {entry.Part.Name} — {state}, пыль {Mathf.RoundToInt(entry.Dust01 * 100)}%{paste}";
+    }
+
+    // ---------- Продажа, пожар и сохранения (Модуль 3) ----------
+
+    /// <summary>Суммарная цена установленных деталей; вбитые молотком ценятся ниже.</summary>
+    public int GetTotalValueRub()
+    {
+        int sum = 0;
+        foreach (InstalledPart entry in _installed.Values)
+        {
+            sum += entry.Hammered ? (int)(entry.Part.ValueRub * 0.8f) : entry.Part.ValueRub;
+        }
+
+        return sum;
+    }
+
+    /// <summary>ПК уехал к клиенту: стол пустеет, детали из инвентаря не возвращаются.</summary>
+    public void ClearBuild()
+    {
+        CancelPlacement();
+        foreach (InstalledPart entry in _installed.Values)
+        {
+            entry.Visual.QueueFree();
+        }
+
+        _installed.Clear();
+        _selected = null;
+        SetFanSpinning(false);
+        SetSmoke(false);
+    }
+
+    /// <summary>После пожара одна случайная деталь превращается в уголёк и исчезает.</summary>
+    public PcPart? BurnRandomPart()
+    {
+        var keys = new List<PartType>(_installed.Keys);
+        if (keys.Count == 0)
+        {
+            return null;
+        }
+
+        PartType type = keys[_rng.Next(keys.Count)];
+        InstalledPart entry = _installed[type];
+        _installed.Remove(type);
+        if (_selected == type)
+        {
+            _selected = null;
+        }
+
+        entry.Visual.QueueFree();
+        return entry.Part;
+    }
+
+    /// <summary>Ставит деталь из сейва без броска на «влезет/не влезет» — как было, так и было.</summary>
+    public void RestoreInstalled(PcPart part, bool needsHammer, bool hammered, int hammerHits, float dust01, float paste01)
+    {
+        if (_installed.ContainsKey(part.Type))
+        {
+            return;
+        }
+
+        var entry = new InstalledPart
+        {
+            Part = part,
+            Visual = PartVisualFactory.Create(part),
+            Dust01 = dust01,
+            Paste01 = paste01,
+            NeedsHammer = needsHammer,
+            Hammered = hammered,
+            HammerHits = hammerHits
+        };
+
+        entry.Visual.Position = needsHammer ? PendingPosition : SlotPositions[part.Type];
+        if (needsHammer)
+        {
+            entry.Visual.RotationDegrees = new Vector3(0, 24f, 7f);
+        }
+        else if (hammered)
+        {
+            entry.Visual.Scale = new Vector3(1.26f, 0.68f, 1.20f);
+            entry.Visual.RotationDegrees = new Vector3(0, 6f, 2f);
+        }
+
+        entry.DustVisual = BuildDustOverlay(entry.Dust01);
+        entry.Visual.AddChild(entry.DustVisual);
+        if (part.Type == PartType.Cpu)
+        {
+            entry.MayoVisual = BuildMayoOverlay();
+            entry.MayoVisual.Scale = Vector3.One * Mathf.Max(0.05f, paste01);
+            entry.Visual.AddChild(entry.MayoVisual);
+        }
+
+        AddChild(entry.Visual);
+        AttachCollider(entry);
+        _installed[part.Type] = entry;
     }
 
     // ---------- Служебное ----------

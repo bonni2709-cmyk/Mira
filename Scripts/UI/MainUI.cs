@@ -67,6 +67,7 @@ public partial class MainUI : CanvasLayer
         BuildInventory();
         BuildShop();
         BuildBuildPanel();
+        BuildClientPanel();
         BuildMessageBar();
         _hud.Visible = false;
     }
@@ -111,7 +112,62 @@ public partial class MainUI : CanvasLayer
         _inventoryPanel.Visible = false;
         _shopPanel.Visible = false;
         _buildPanel.Visible = false;
+        _clientPanel.Visible = false;
         _helpPanel.Visible = false;
+    }
+
+    public void OpenClientPanel()
+    {
+        ClosePanels();
+        _clientPanel.Visible = true;
+    }
+
+    public bool IsClientPanelOpen => _clientPanel.Visible;
+
+    public void SetClientDialogue(string name, string text, string status,
+        bool canNext, bool canAccept, bool canLaunch, bool canSell, bool canReject)
+    {
+        _clientNameLabel.Text = name;
+        _clientTextLabel.Text = text;
+        _clientStatusLabel.Text = status;
+        _clientNextButton.Disabled = !canNext;
+        _acceptOrderButton.Disabled = !canAccept;
+        _launchButton.Disabled = !canLaunch;
+        _sellPcButton.Disabled = !canSell;
+        _rejectButton.Disabled = !canReject;
+    }
+
+    public void RefreshTools()
+    {
+        foreach (Node child in _toolsList.GetChildren())
+        {
+            child.QueueFree();
+        }
+
+        foreach (ToolsCatalog.ToolDef def in ToolsCatalog.All)
+        {
+            bool owned = _state.OwnsTool(def.Id);
+            var row = new HBoxContainer();
+            row.AddThemeConstantOverride("separation", 10);
+            Label label = MakeLabel(owned
+                ? $"{def.Name} — КУПЛЕН\n{def.Description}"
+                : $"{def.Name} — {def.PriceRub} ₽\n{def.Description}", 18);
+            label.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+            label.AutowrapMode = TextServer.AutowrapMode.WordSmart;
+            row.AddChild(label);
+
+            if (!owned)
+            {
+                Button buy = MakeButton("Купить");
+                buy.Disabled = !_state.CanAfford(def.PriceRub);
+                string id = def.Id;
+                buy.Pressed += () => BuyToolPressed?.Invoke(id);
+                row.AddChild(buy);
+            }
+
+            _toolsList.AddChild(row);
+            _toolsList.AddChild(new HSeparator());
+        }
     }
 
     public void SetMessage(string text)
@@ -264,6 +320,18 @@ public partial class MainUI : CanvasLayer
         build.Pressed += OpenBuildPanel;
         row.AddChild(build);
 
+        Button client = MakeButton("Клиент");
+        client.Pressed += () =>
+        {
+            SummonClientPressed?.Invoke();
+            OpenClientPanel();
+        };
+        row.AddChild(client);
+
+        Button save = MakeButton("Сохранить");
+        save.Pressed += () => SavePressed?.Invoke();
+        row.AddChild(save);
+
         Button shop = MakeButton("Магазин AliExpress");
         shop.Pressed += () => TogglePanel(_shopPanel);
         row.AddChild(shop);
@@ -367,7 +435,10 @@ public partial class MainUI : CanvasLayer
             "4. Майонез: кнопка «Намазать майонез», затем води пальцем по процессору на столе.\n" +
             "5. Продувка: дуй в микрофон телефона (или зажми кнопку «Дуть») — пыль долой, температура ниже.\n" +
             "6. Тряхни телефон — узнаешь, что там гремит. Иногда деталь вылетает. Честная диагностика.\n" +
-            "7. «СТАРТ ТЕСТА»: 30 секунд. 88°C — вибрирует и дымит, 100°C — всё, приехали. Дуй, чтобы выжить!", 20));
+            "7. «СТАРТ ТЕСТА»: 30 секунд. 88°C — вибрирует и дымит, 100°C — всё, приехали. Дуй, чтобы выжить!\n\n" +
+            "КЛИЕНТ И ПРОДАЖА (Модуль 3)\n" +
+            "Школьник приходит сам или по кнопке «Клиент». Выслушай его, прими заказ, собери ПК и жми «Запустить Киберпанк»: 60 секунд под нагрузкой при клиенте. Дуй в микрофон, открывай корпус кнопкой в панели сборки (-12°C). Прожил минуту — продавай за цену деталей x1.6 + 250 ₽. Дошёл до 100°C — одна деталь сгорит, клиент уйдёт.\n" +
+            "Заработанное трать в магазине на инструменты: молоток «Убедитель», пылесос, настоящую термопасту и комнатный вентилятор. Кнопка «Сохранить» пишет прогресс, игра и сама сохраняется после важных событий.", 20));
         AddCloseButton(content, _helpPanel);
         _helpPanel.Visible = false;
     }
@@ -512,6 +583,7 @@ public partial class MainUI : CanvasLayer
         _inventoryPanel.Visible = false;
         _shopPanel.Visible = false;
         _buildPanel.Visible = false;
+        _clientPanel.Visible = false;
         _helpPanel.Visible = false;
         panel.Visible = show;
         if (show && panel == _inventoryPanel)
