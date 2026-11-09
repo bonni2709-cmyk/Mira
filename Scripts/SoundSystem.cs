@@ -29,13 +29,13 @@ public partial class SoundSystem : Node
         AddChild(_fanPlayer);
     }
 
-    public void PlayDig() => Play(SynthNoiseSweep(0.22f, 0.35f, decay: 5f), -10f);
-    public void PlayHammer() => Play(SynthThud(), -4f);
-    public void PlayPop() => Play(SynthThud(140f, 0.12f), -8f);
-    public void PlayCreak() => Play(SynthCreak(), -12f);
-    public void PlayExplosion() => Play(SynthExplosion(), -2f);
-    public void PlayCash() => Play(SynthCash(), -8f);
-    public void PlayFail() => Play(SynthSweep(300f, 60f, 0.5f), -10f);
+    public void PlayDig() => Play(MakeStream(SynthNoiseSweep(0.22f, 0.35f, decay: 5f)), -10f);
+    public void PlayHammer() => Play(MakeStream(SynthThud()), -4f);
+    public void PlayPop() => Play(MakeStream(SynthThud(140f, 0.12f)), -8f);
+    public void PlayCreak() => Play(MakeStream(SynthCreak()), -12f);
+    public void PlayExplosion() => Play(MakeStream(SynthExplosion()), -2f);
+    public void PlayCash() => Play(MakeStream(SynthCash()), -8f);
+    public void PlayFail() => Play(MakeStream(SynthSweep(300f, 60f, 0.5f)), -10f);
 
     public void SetFan(bool on)
     {

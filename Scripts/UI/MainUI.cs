@@ -23,6 +23,15 @@ public partial class MainUI : CanvasLayer
     public event Action? BlowButtonUp;
     public event Action? StartTestPressed;
     public event Action? StopTestPressed;
+    public event Action? SavePressed;
+    public event Action<string>? BuyToolPressed;
+    public event Action? ClientNextPressed;
+    public event Action? AcceptOrderPressed;
+    public event Action? LaunchCyberpunkPressed;
+    public event Action? SellPcPressed;
+    public event Action? RejectClientPressed;
+    public event Action? OpenCasePressed;
+    public event Action? SummonClientPressed;
 
     private GameState _state = null!;
 
@@ -32,6 +41,16 @@ public partial class MainUI : CanvasLayer
     private Control _inventoryPanel = null!;
     private Control _shopPanel = null!;
     private Control _buildPanel = null!;
+    private Control _clientPanel = null!;
+    private Label _clientNameLabel = null!;
+    private Label _clientTextLabel = null!;
+    private Label _clientStatusLabel = null!;
+    private Button _clientNextButton = null!;
+    private Button _acceptOrderButton = null!;
+    private Button _launchButton = null!;
+    private Button _sellPcButton = null!;
+    private Button _rejectButton = null!;
+    private VBoxContainer _toolsList = null!;
     private Label _moneyLabel = null!;
     private Label _inventoryCountLabel = null!;
     private Label _heatLabel = null!;
@@ -481,8 +500,58 @@ public partial class MainUI : CanvasLayer
 
         _shopStatusLabel = MakeWrapped("Коробок в пути нет. Гараж пуст и готов к разочарованиям.", 20);
         content.AddChild(_shopStatusLabel);
+        Label toolsTitle = MakeLabel("Инструменты (навсегда твои)", 24);
+        toolsTitle.AddThemeColorOverride("font_color", AccentColor);
+        content.AddChild(toolsTitle);
+
+        var toolsScroll = new ScrollContainer { CustomMinimumSize = new Vector2(620, 210) };
+        _toolsList = new VBoxContainer();
+        _toolsList.AddThemeConstantOverride("separation", 8);
+        _toolsList.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        toolsScroll.AddChild(_toolsList);
+        content.AddChild(toolsScroll);
+
         AddCloseButton(content, _shopPanel);
         _shopPanel.Visible = false;
+    }
+
+    private void BuildClientPanel()
+    {
+        _clientPanel = MakeSidePanel("Клиент");
+        VBoxContainer content = GetPanelContent(_clientPanel);
+
+        _clientNameLabel = MakeLabel("Клиента нет", 26);
+        _clientNameLabel.AddThemeColorOverride("font_color", AccentColor);
+        content.AddChild(_clientNameLabel);
+
+        _clientTextLabel = MakeWrapped("У прилавка пусто. Нажми «Клиент» вверху, чтобы позвать следующего мечтателя, или подожди — они сами находят гараж по запаху палёной проводки.", 21);
+        content.AddChild(_clientTextLabel);
+
+        _clientStatusLabel = MakeWrapped("", 19);
+        content.AddChild(_clientStatusLabel);
+
+        _clientNextButton = MakeButton("Далее");
+        _clientNextButton.Pressed += () => ClientNextPressed?.Invoke();
+        content.AddChild(_clientNextButton);
+
+        _acceptOrderButton = MakeButton("Принять заказ");
+        _acceptOrderButton.Pressed += () => AcceptOrderPressed?.Invoke();
+        content.AddChild(_acceptOrderButton);
+
+        _launchButton = MakeButton("Запустить Киберпанк (60 секунд выживания!)");
+        _launchButton.Pressed += () => LaunchCyberpunkPressed?.Invoke();
+        content.AddChild(_launchButton);
+
+        _sellPcButton = MakeButton("Продать ПК");
+        _sellPcButton.Pressed += () => SellPcPressed?.Invoke();
+        content.AddChild(_sellPcButton);
+
+        _rejectButton = MakeButton("Отказать (уходи, мечтатель)");
+        _rejectButton.Pressed += () => RejectClientPressed?.Invoke();
+        content.AddChild(_rejectButton);
+
+        AddCloseButton(content, _clientPanel);
+        _clientPanel.Visible = false;
     }
 
     private void BuildBuildPanel()
@@ -544,6 +613,10 @@ public partial class MainUI : CanvasLayer
         _stopTestButton.Disabled = true;
         _stopTestButton.Pressed += () => StopTestPressed?.Invoke();
         testRow.AddChild(_stopTestButton);
+
+        Button openCase = MakeButton("Открыть корпус (-12°C, раз в 20 сек)");
+        openCase.Pressed += () => OpenCasePressed?.Invoke();
+        content.AddChild(openCase);
 
         AddCloseButton(content, _buildPanel);
         _buildPanel.Visible = false;

@@ -98,7 +98,7 @@ public partial class AndroidSensors : Node
             return;
         }
 
-        PackedVector2Array buffer = _capture.GetBuffer(frames);
+        var buffer = _capture.GetBuffer(frames);
         float peak = 0f;
         foreach (Vector2 frame in buffer)
         {

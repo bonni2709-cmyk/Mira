@@ -42,6 +42,11 @@ public partial class BuildController : Node3D
     public bool HasCase => _installed.ContainsKey(PartType.ComputerCase);
     public IReadOnlyDictionary<PartType, InstalledPart> Installed => _installed;
 
+    // Эффекты купленных инструментов выставляет Main (см. ToolsCatalog).
+    public int HammerHitsRequired { get; set; } = 2;
+    public float BlowDustMultiplier { get; set; } = 1.0f;
+    public bool HasRealPaste { get; set; }
+
     private static readonly Dictionary<PartType, Vector3> SlotPositions = new()
     {
         { PartType.ComputerCase, new Vector3(-1.45f, 0f, 0f) },
@@ -265,7 +270,7 @@ public partial class BuildController : Node3D
         tween.TweenProperty(entry.Visual, "position", basePos + new Vector3(0, 0.10f, 0), 0.06);
         tween.TweenProperty(entry.Visual, "position", basePos, 0.08);
 
-        if (entry.HammerHits >= 2)
+        if (entry.HammerHits >= HammerHitsRequired)
         {
             entry.NeedsHammer = false;
             entry.Hammered = true;
