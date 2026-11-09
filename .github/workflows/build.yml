@@ -88,8 +88,16 @@ jobs:
         run: |
           cd "$PROJECT_PATH"
           mkdir -p build
-          godot --headless --verbose --export-debug "Android" "build/${EXPORT_NAME}.apk"
+          set +e
+          godot --headless --verbose --export-debug "Android" "build/${EXPORT_NAME}.apk" > "$GITHUB_WORKSPACE/ci-export.log" 2>&1
+          code=$?
+          echo "EXPORT_EXIT=$code" | tee -a "$GITHUB_WORKSPACE/ci-export.log"
+          tail -n 60 "$GITHUB_WORKSPACE/ci-export.log" | while IFS= read -r line; do
+            safe="$(printf '%s' "$line" | sed 's/%/%25/g; s/\r/%0D/g')"
+            echo "::error title=export::$safe"
+          done
           ls -lh build/
+          exit $code
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
