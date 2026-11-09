@@ -39,6 +39,17 @@ jobs:
           java -version || true
           echo "ANDROID_HOME=${ANDROID_HOME:-unset} ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT:-unset}"
 
+      - name: Fix .NET root for Godot (hostfxr)
+        run: |
+          echo "dotnet: $(which dotnet || echo missing) -> $(readlink -f "$(which dotnet)" 2>/dev/null || echo '?')"
+          FXR="$(find / -type d -path '*/host/fxr' 2>/dev/null | head -n 1 || true)"
+          echo "host/fxr found at: ${FXR:-none}"
+          if [ -n "$FXR" ]; then
+            DOTNET_ROOT_FIXED="$(dirname "$(dirname "$FXR")")"
+            echo "Setting DOTNET_ROOT=$DOTNET_ROOT_FIXED"
+            echo "DOTNET_ROOT=$DOTNET_ROOT_FIXED" >> "$GITHUB_ENV"
+          fi
+
       - name: Setup export templates
         run: |
           DEST="$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable.mono"
