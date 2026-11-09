@@ -42,7 +42,9 @@ jobs:
 
       - name: Install .NET 8 SDK (container image has none)
         run: |
-          curl -sSL https://dot.net/v1/dotnet-install.sh -o /tmp/dotnet-install.sh             || wget -q https://dot.net/v1/dotnet-install.sh -O /tmp/dotnet-install.sh
+          for i in 1 2 3; do
+            curl -fsSL https://dot.net/v1/dotnet-install.sh -o /tmp/dotnet-install.sh && break || sleep 10
+          done
           bash /tmp/dotnet-install.sh --channel 8.0 --install-dir "$HOME/.dotnet"
           echo "$HOME/.dotnet" >> "$GITHUB_PATH"
           echo "DOTNET_ROOT=$HOME/.dotnet" >> "$GITHUB_ENV"
@@ -123,7 +125,10 @@ jobs:
       - name: Install Java 17 (Temurin)
         run: |
           mkdir -p "$HOME/jdk"
-          curl -sSL "https://api.adoptium.net/v3/binary/latest/17/ga/linux/x64/jdk/hotspot/normal/eclipse" -o /tmp/jdk.tar.gz
+          for i in 1 2 3; do
+            curl -fsSL "https://api.adoptium.net/v3/binary/latest/17/ga/linux/x64/jdk/hotspot/normal/eclipse" -o /tmp/jdk.tar.gz \
+              && tar -tzf /tmp/jdk.tar.gz > /dev/null && break || sleep 10
+          done
           tar -xzf /tmp/jdk.tar.gz -C "$HOME/jdk" --strip-components=1
           echo "JAVA_HOME=$HOME/jdk" >> "$GITHUB_ENV"
           echo "$HOME/jdk/bin" >> "$GITHUB_PATH"
@@ -133,7 +138,9 @@ jobs:
         run: |
           SDK="$HOME/android-sdk"
           mkdir -p "$SDK/cmdline-tools"
-          curl -sSL "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip" -o /tmp/cmdtools.zip
+          for i in 1 2 3; do
+            curl -fsSL "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip" -o /tmp/cmdtools.zip && break || sleep 10
+          done
           cd /tmp && "$HOME/jdk/bin/jar" xf cmdtools.zip
           mv /tmp/cmdline-tools "$SDK/cmdline-tools/latest"
           chmod -R +x "$SDK/cmdline-tools/latest/bin" || true
