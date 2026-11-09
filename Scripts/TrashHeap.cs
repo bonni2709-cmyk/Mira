@@ -77,7 +77,7 @@ public partial class TrashHeap : Node3D
         var mesh = new BoxMesh { Size = new Vector3(0.14f, 0.10f, 0.14f) };
         mesh.Material = PixelTextureFactory.Flat(new Color(0.55f, 0.46f, 0.34f, 0.8f));
 
-        var particles = new GPUParticles3D
+        var particles = new GpuParticles3D
         {
             Amount = 18,
             Lifetime = 0.65f,

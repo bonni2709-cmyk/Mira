@@ -573,7 +573,7 @@ public partial class BuildController : Node3D
         var mesh = new BoxMesh { Size = new Vector3(0.09f, 0.09f, 0.09f) };
         mesh.Material = PixelTextureFactory.Flat(new Color(0.85f, 0.45f, 0.18f), 0.7f);
 
-        var particles = new GPUParticles3D
+        var particles = new GpuParticles3D
         {
             Amount = 56,
             Lifetime = 0.9f,
