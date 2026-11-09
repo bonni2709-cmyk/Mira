@@ -1106,7 +1106,6 @@ public partial class Main : Node3D
             BackgroundColor = new Color(0.05f, 0.045f, 0.04f),
             AmbientLightColor = new Color(0.50f, 0.44f, 0.34f),
             AmbientLightEnergy = 0.34f,
-            GlowEnabled = false,
             FogEnabled = false,
             // 3.0/Модуль 2: SSAO на Forward-рендере добавит контактной глубины;
             // на мобильном Compatibility Godot его честно игнорирует, FPS не страдает.

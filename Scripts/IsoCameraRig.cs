@@ -38,7 +38,7 @@ public partial class IsoCameraRig : Node3D
         _camera.Attributes = new CameraAttributesPractical
         {
             DofBlurFarEnabled = true,
-            DofBlurFarBegin = 16.0f,
+            DofBlurFarDistance = 16.0f,
             DofBlurFarTransition = 9.0f,
             DofBlurNearEnabled = false,
             DofBlurAmount = 0.07f
