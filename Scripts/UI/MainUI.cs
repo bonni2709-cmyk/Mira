@@ -37,6 +37,8 @@ public partial class MainUI : CanvasLayer
     public event Action? GoToDumpPressed;
     /// <summary>3.0/Модуль 2: клик любой кнопки интерфейса (для звука).</summary>
     public event Action? ButtonClicked;
+    /// <summary>3.0/Модуль 3: кнопка рычага разгона в панели сборки.</summary>
+    public event Action? CycleOverclockPressed;
 
     private readonly System.Collections.Generic.HashSet<Button> _clickWired = new();
     /// <summary>2.0: результат мини-игры майонеза (покрытие %, потёки %).</summary>
