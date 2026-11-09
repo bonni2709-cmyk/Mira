@@ -461,8 +461,8 @@ public partial class MainUI : CanvasLayer
         // 3.0/Модуль 1: кнопок стало много — верхнее меню теперь горизонтально прокручивается свайпом.
         var topScroll = new ScrollContainer
         {
-            HorizontalScrollMode = ScrollContainer.ScrollModeEnum.ShowNever,
-            VerticalScrollMode = ScrollContainer.ScrollModeEnum.Disabled
+            HorizontalScrollMode = ScrollContainer.ScrollMode.ShowNever,
+            VerticalScrollMode = ScrollContainer.ScrollMode.Disabled
         };
         topBar.AddChild(topScroll);
 
