@@ -841,14 +841,16 @@ public partial class Main : Node3D
     {
         var environment = new Godot.Environment
         {
-            BackgroundMode = Godot.Environment.BGEnum.Color,
             BackgroundColor = new Color(0.07f, 0.06f, 0.05f),
-            AmbientLightSource = Godot.Environment.AmbientSourceEnum.Color,
             AmbientLightColor = new Color(0.55f, 0.48f, 0.38f),
             AmbientLightEnergy = 0.55f,
             GlowEnabled = false,
             FogEnabled = false
         };
+        // Режимы фона и рассеянного света: 1 = Color у background_mode, 2 = Color у ambient_light_source.
+        // Через Set(), чтобы не зависеть от имён вложенных enum в биндингах GodotSharp.
+        environment.Set("background_mode", 1);
+        environment.Set("ambient_light_source", 2);
         AddChild(new WorldEnvironment { Environment = environment });
     }
 }
