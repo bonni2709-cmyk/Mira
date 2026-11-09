@@ -28,6 +28,8 @@ public sealed class ClientData
     public required Color CapColor;
     public required ClientHat Hat;
     public float? MaxTempCelsius;
+    /// <summary>Спецзаказ 2.0: собрать ПК целиком из иранского набора деталей.</summary>
+    public bool IsIranianOrder;
 }
 
 public static class ClientCatalog
@@ -69,6 +71,25 @@ public static class ClientCatalog
 
     public static ClientData CreateRandom(Random rng, int garageLevel, float budgetMultiplier)
     {
+        // Спецзаказ «Иранская сборка» (2.0): редкий гость с автомобильным аккумулятором.
+        if (rng.Next(100) < 14)
+        {
+            return new ClientData
+            {
+                Name = "Ашот с авторынка",
+                Archetype = "Спецзаказ",
+                GameTitle = "Иранская сборка от аккумулятора",
+                IntroLine = "Слушай, брат. Нужен компьютер, который работает от автомобильного аккумулятора. У меня как раз есть иранский комплект: провода от холодильника ЗИЛ, блок питания из микроволновки и процессор на керосине. Всё уже у тебя в инвентаре будет. Собери ТОЛЬКО из них, слышишь? Плачу ×1.8. Но если накосячишь — при тесте скачок напряжения и взрыв, я предупредил.",
+                RequestLine = "Поставь все три иранские детали: материнку ЗИЛ, БП из микроволновки и керосиновый процессор. Запусти тест при мне. Взлетим — сам виноват.",
+                BudgetRub = (int)(2600 * budgetMultiplier),
+                HoodieColor = new Color(0.30f, 0.30f, 0.30f),
+                CapColor = new Color(0.45f, 0.45f, 0.42f),
+                Hat = ClientHat.Cap,
+                MaxTempCelsius = null,
+                IsIranianOrder = true
+            };
+        }
+
         var available = new System.Collections.Generic.List<Archetype>();
         foreach (Archetype a in Pool)
         {

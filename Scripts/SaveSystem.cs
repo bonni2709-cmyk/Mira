@@ -23,6 +23,7 @@ public static class SaveSystem
         public float TintB { get; set; }
         public string Source { get; set; } = "";
         public string Description { get; set; } = "";
+        public bool Iranian { get; set; }
     }
 
     public sealed class InstalledDto
@@ -52,7 +53,7 @@ public static class SaveSystem
 
     public static bool HasSave => File.Exists(SavePath);
 
-    public static void Save(GameState state, BuildController build)
+    public static void Save(GameState state, BuildController? build)
     {
         var data = new SaveData
         {
@@ -69,7 +70,18 @@ public static class SaveSystem
             data.Inventory.Add(ToDto(part));
         }
 
-        foreach (KeyValuePair<PartType, BuildController.InstalledPart> pair in build.Installed)
+        if (build == null)
+        {
+            // Сцена свалки: стола сборки здесь нет — сохраняем установленный ПК из прошлого сейва как есть.
+            SaveData? previous = Load();
+            if (previous != null)
+            {
+                data.Installed = previous.Installed;
+            }
+        }
+
+        foreach (KeyValuePair<PartType, BuildController.InstalledPart> pair in build?.Installed
+                     ?? new Dictionary<PartType, BuildController.InstalledPart>())
         {
             BuildController.InstalledPart entry = pair.Value;
             data.Installed.Add(new InstalledDto
@@ -119,13 +131,14 @@ public static class SaveSystem
             TintG = part.Tint.G,
             TintB = part.Tint.B,
             Source = part.Source,
-            Description = part.Description
+            Description = part.Description,
+            Iranian = part.Iranian
         };
     }
 
     public static PcPart FromDto(PartDto dto)
     {
         return new PcPart(dto.Name, (PartType)dto.Type, (PartQuality)dto.Quality, dto.ValueRub,
-            new Color(dto.TintR, dto.TintG, dto.TintB), dto.Source, dto.Description);
+            new Color(dto.TintR, dto.TintG, dto.TintB), dto.Source, dto.Description, dto.Iranian);
     }
 }

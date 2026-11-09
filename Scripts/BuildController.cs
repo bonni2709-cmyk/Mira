@@ -308,6 +308,57 @@ public partial class BuildController : Node3D
     public bool CpuHasPaste =>
         _installed.TryGetValue(PartType.Cpu, out InstalledPart cpu) && cpu.Paste01 >= 0.7f;
 
+    /// <summary>Майонез потёк на материнку при мини-игре: следующий тест — короткое замыкание.</summary>
+    public bool MayoShortCircuit { get; private set; }
+
+    /// <summary>Принимает результат мини-игры «Намазать майонез» (покрытие и потёки в процентах).</summary>
+    public string SetPasteResult(float coveragePercent, float leakPercent)
+    {
+        if (!_installed.TryGetValue(PartType.Cpu, out InstalledPart cpu))
+        {
+            return "Мазать нечего: процессора на столе нет.";
+        }
+
+        cpu.Paste01 = Mathf.Clamp(coveragePercent / 100.0f, 0f, 1f);
+        cpu.MayoVisual.Scale = Vector3.One * Mathf.Max(0.05f, cpu.Paste01);
+        MayoShortCircuit = leakPercent > 8.0f || coveragePercent > 97.0f;
+
+        if (MayoShortCircuit)
+        {
+            return $"Майонез: {coveragePercent:0}% покрытия и потёки {leakPercent:0}%. Он уже на дорожках материнки. Следующий запуск, скорее всего, будет с фейерверком.";
+        }
+
+        if (coveragePercent < 70.0f)
+        {
+            return $"Майонез: всего {coveragePercent:0}% покрытия. Процессор будет греться, как печка в июле. Надо 70-90%.";
+        }
+
+        if (coveragePercent > 90.0f)
+        {
+            return $"Майонез: {coveragePercent:0}% — щедро, на грани потёка, но дорожки сухие. Жить будет. Наверное.";
+        }
+
+        return $"Майонез: {coveragePercent:0}% — идеальный слой, как в заводской столовой. Процессор доволен.";
+    }
+
+    /// <summary>Сколько иранских деталей стоит на столе и все ли три на месте.</summary>
+    public (int installed, bool fullSet) GetIranianStatus()
+    {
+        int count = 0;
+        foreach (InstalledPart entry in _installed.Values)
+        {
+            if (entry.Part.Iranian)
+            {
+                count++;
+            }
+        }
+
+        bool full = _installed.TryGetValue(PartType.Cpu, out InstalledPart cpu) && cpu.Part.Iranian
+            && _installed.TryGetValue(PartType.Psu, out InstalledPart psu) && psu.Part.Iranian
+            && _installed.TryGetValue(PartType.Motherboard, out InstalledPart mobo) && mobo.Part.Iranian;
+        return (count, full);
+    }
+
     public float CpuPaste01 =>
         _installed.TryGetValue(PartType.Cpu, out InstalledPart cpu) ? cpu.Paste01 : 0f;
 
@@ -437,8 +488,11 @@ public partial class BuildController : Node3D
 
         if (_installed.ContainsKey(PartType.Cpu))
         {
-            rate += CpuHasPaste ? -0.55f : 1.35f;
+            rate += CpuHasPaste ? (HasRealPaste ? -1.05f : -0.55f) : 1.35f;
         }
+
+        (int iranianCount, bool iranianFull) = GetIranianStatus();
+        rate += iranianFull ? 0.45f : iranianCount * 0.35f;
 
         if (!_installed.ContainsKey(PartType.Gpu))
         {

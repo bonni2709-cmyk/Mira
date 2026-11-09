@@ -1,0 +1,54 @@
+[gd_scene load_steps=8 format=3 uid="uid://dump2location"]
+
+[ext_resource type="Script" path="res://Scripts/DumpLocation.cs" id="1_dump"]
+[ext_resource type="Script" path="res://Scripts/TrashHeap.cs" id="2_heap"]
+[ext_resource type="Script" path="res://Scripts/UI/DumpUI.cs" id="3_dumpui"]
+[ext_resource type="Script" path="res://Scripts/IsoCameraRig.cs" id="4_camera"]
+[ext_resource type="Script" path="res://Scripts/SoundSystem.cs" id="5_sound"]
+
+[sub_resource type="Animation" id="Animation_idle"]
+length = 0.001
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_heap"]
+_data = {
+"RESET": SubResource("Animation_idle")
+}
+
+[node name="DumpLocation" type="Node3D"]
+script = ExtResource("1_dump")
+
+[node name="Heap1" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.5, 0, 0.5)
+script = ExtResource("2_heap")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="Heap1"]
+libraries = {
+"": SubResource("AnimationLibrary_heap")
+}
+
+[node name="Heap2" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0, -2.2)
+script = ExtResource("2_heap")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="Heap2"]
+libraries = {
+"": SubResource("AnimationLibrary_heap")
+}
+
+[node name="Heap3" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, 1.5)
+script = ExtResource("2_heap")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="Heap3"]
+libraries = {
+"": SubResource("AnimationLibrary_heap")
+}
+
+[node name="CameraRig" type="Node3D" parent="."]
+script = ExtResource("4_camera")
+
+[node name="SoundSystem" type="Node" parent="."]
+script = ExtResource("5_sound")
+
+[node name="UI" type="CanvasLayer" parent="."]
+script = ExtResource("3_dumpui")

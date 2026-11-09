@@ -33,6 +33,12 @@ public partial class MainUI : CanvasLayer
     public event Action? OpenCasePressed;
     public event Action? SummonClientPressed;
     public event Action<int>? BuyGaragePressed;
+    /// <summary>2.0: поехать на отдельную локацию «Свалка».</summary>
+    public event Action? GoToDumpPressed;
+    /// <summary>2.0: результат мини-игры майонеза (покрытие %, потёки %).</summary>
+    public event Action<float, float>? MayoApplied;
+    /// <summary>2.0: тап «Охладить» в интерактивном тесте Киберпанка.</summary>
+    public event Action? CoolTapPressed;
 
     private GameState _state = null!;
 
@@ -74,6 +80,12 @@ public partial class MainUI : CanvasLayer
     private Button _stopTestButton = null!;
     private ProgressBar _tempBar = null!;
     private ProgressBar _micBar = null!;
+    private Control _testOverlay = null!;
+    private ProgressBar _testTempBar = null!;
+    private Label _testTempLabel = null!;
+    private Label _testRedZoneLabel = null!;
+    private Label _testTimeLabel = null!;
+    private MayoMinigame _mayoMinigame = null!;
 
     private static readonly Color PanelColor = new(0.14f, 0.115f, 0.09f, 0.96f);
     private static readonly Color ButtonColor = new(0.38f, 0.27f, 0.16f, 1f);
@@ -91,7 +103,83 @@ public partial class MainUI : CanvasLayer
         BuildBuildPanel();
         BuildClientPanel();
         BuildMessageBar();
+        BuildTestOverlay();
+
+        _mayoMinigame = new MayoMinigame();
+        _mayoMinigame.Finished += (coverage, leak) => MayoApplied?.Invoke(coverage, leak);
+        _mayoMinigame.Cancelled += () => SetMessage("Майонез отложен. Процессор ждёт свой бутерброд.");
+        AddChild(_mayoMinigame);
+
         _hud.Visible = false;
+    }
+
+    /// <summary>Открывает 2D-мини-игру майонеза поверх всего (Обновление 2.0).</summary>
+    public void OpenMayoOverlay(float currentPaste01)
+    {
+        _mayoMinigame.Open(currentPaste01);
+    }
+
+    /// <summary>Интерактивный тест 2.0: ползунок температуры вместо чистого таймера.</summary>
+    public void SetTestOverlayVisible(bool visible) => _testOverlay.Visible = visible;
+
+    public void SetTestOverlay(float celsius, float secondsLeft, bool running, float redZoneSeconds, bool isChallenge)
+    {
+        if (!running)
+        {
+            _testOverlay.Visible = false;
+            return;
+        }
+
+        _testOverlay.Visible = true;
+        _testTempBar.Value = celsius;
+        Color fill = celsius >= HeatSystem.CriticalCelsius
+            ? new Color(0.78f, 0.24f, 0.15f)
+            : celsius >= HeatSystem.WarningCelsius
+                ? new Color(0.82f, 0.52f, 0.20f)
+                : new Color(0.55f, 0.48f, 0.30f);
+        _testTempBar.AddThemeStyleboxOverride("fill", new StyleBoxFlat { BgColor = fill, CornerRadiusTopLeft = 3, CornerRadiusTopRight = 3, CornerRadiusBottomLeft = 3, CornerRadiusBottomRight = 3 });
+        _testTempLabel.Text = $"🌡 {celsius:0} °C — тапай «Охладить», не дай стрелке жить в красной зоне!";
+        _testRedZoneLabel.Text = redZoneSeconds > 0.05f
+            ? $"КРАСНАЯ ЗОНА: {redZoneSeconds:0.0} / 3.0 сек — ВЗРЫВ БЛИЗКО"
+            : "";
+        _testTimeLabel.Text = isChallenge
+            ? $"Киберпанк при клиенте: осталось {Mathf.CeilToInt(secondsLeft)} сек"
+            : $"Тест: осталось {Mathf.CeilToInt(secondsLeft)} сек";
+    }
+
+    private void BuildTestOverlay()
+    {
+        var panel = new PanelContainer();
+        panel.SetAnchorsPreset(Control.LayoutPreset.CenterTop);
+        panel.Position = new Vector2(-330, 74);
+        panel.CustomMinimumSize = new Vector2(660, 0);
+        panel.AddThemeStyleboxOverride("panel", MakePanelStyle());
+        panel.Visible = false;
+        AddChild(panel);
+        _testOverlay = panel;
+
+        var content = new VBoxContainer();
+        content.AddThemeConstantOverride("separation", 8);
+        panel.AddChild(content);
+
+        _testTimeLabel = MakeLabel("Тест: 30 сек", 22);
+        content.AddChild(_testTimeLabel);
+
+        _testTempBar = new ProgressBar { MinValue = 30, MaxValue = 110, Value = HeatSystem.AmbientCelsius, ShowPercentage = false, CustomMinimumSize = new Vector2(620, 26) };
+        content.AddChild(_testTempBar);
+
+        _testTempLabel = MakeLabel("🌡 34 °C — тапай «Охладить»!", 22);
+        content.AddChild(_testTempLabel);
+
+        _testRedZoneLabel = MakeLabel("", 21);
+        _testRedZoneLabel.AddThemeColorOverride("font_color", new Color(1.0f, 0.45f, 0.35f));
+        content.AddChild(_testRedZoneLabel);
+
+        Button cool = MakeButton("ОХЛАДИТЬ (тап по вентилятору) ❄");
+        cool.CustomMinimumSize = new Vector2(0, 58);
+        cool.AddThemeFontSizeOverride("font_size", 24);
+        cool.Pressed += () => CoolTapPressed?.Invoke();
+        content.AddChild(cool);
     }
 
     public void Bind(GameState state)
@@ -404,6 +492,10 @@ public partial class MainUI : CanvasLayer
         shop.Pressed += () => TogglePanel(_shopPanel);
         row.AddChild(shop);
 
+        Button dump = MakeButton("Поехать на свалку");
+        dump.Pressed += () => GoToDumpPressed?.Invoke();
+        row.AddChild(dump);
+
         Button inventory = MakeButton("Инвентарь");
         inventory.Pressed += () => TogglePanel(_inventoryPanel);
         row.AddChild(inventory);
@@ -644,7 +736,7 @@ public partial class MainUI : CanvasLayer
         blow.ButtonUp += () => BlowButtonUp?.Invoke();
         toolRow.AddChild(blow);
 
-        _pasteButton = MakeButton("Намазать майонез");
+        _pasteButton = MakeButton("Намазать майонез (мини-игра)");
         _pasteButton.Pressed += () => PasteModePressed?.Invoke();
         content.AddChild(_pasteButton);
 

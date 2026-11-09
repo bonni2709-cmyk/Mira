@@ -41,7 +41,6 @@ public partial class Main : Node3D
     private PcPart? _pendingAliPart;
     private bool _deliveryInProgress;
     private bool _gameStarted;
-    private bool _pasteMode;
     private bool _blowHeld;
 
     private Vector2 _pressPosition;
@@ -116,8 +115,23 @@ public partial class Main : Node3D
             }
 
             _clientStage = ClientStage.WaitingBuild;
-            _client.Say("Жду! Только не как почта, ладно?");
-            _ui.SetMessage("Заказ принят. Собирай ПК, мажь майонез, продувай пыль — потом «Запустить Киберпанк» в панели клиента.");
+            if (_clientData is { IsIranianOrder: true })
+            {
+                foreach (PcPart part in PartCatalog.CreateIranianSet())
+                {
+                    _state.AddPart(part);
+                }
+
+                SaveGame();
+                _client.Say("Детали в инвентаре. Не перепутай с обычными, брат.");
+                _ui.SetMessage("СПЕЦЗАКАЗ: иранский набор уже в инвентаре (ЗИЛ, микроволновка, керосин). Поставь ВСЕ ТРИ детали — оплата ×1.8. Неполный набор при тесте = скачок напряжения и взрыв.");
+            }
+            else
+            {
+                _client.Say("Жду! Только не как почта, ладно?");
+                _ui.SetMessage("Заказ принят. Собирай ПК, мажь майонез, продувай пыль — потом «Запустить Киберпанк» в панели клиента.");
+            }
+
             UpdateClientUi();
         };
         _ui.LaunchCyberpunkPressed += OnLaunchCyberpunk;
@@ -138,6 +152,16 @@ public partial class Main : Node3D
             UpdateClientUi();
         };
         _ui.BuyGaragePressed += OnBuyGaragePressed;
+        _ui.GoToDumpPressed += OnGoToDump;
+        _ui.MayoApplied += OnMayoApplied;
+        _ui.CoolTapPressed += () =>
+        {
+            if (_heat.IsRunning)
+            {
+                _heat.ApplyInstantCooling(6f);
+                _sound.PlayPop();
+            }
+        };
         _ui.OpenCasePressed += () =>
         {
             if (!_heat.IsRunning)
@@ -158,13 +182,18 @@ public partial class Main : Node3D
             _ui.SetMessage("Крышка сорвана! -12°C. Где-то в углу заплакал один гарантийный стикер.");
         };
 
-        _heat.TemperatureChanged += (celsius, left, running) => _ui.SetTemperature(celsius, left, running);
+        _heat.TemperatureChanged += (celsius, left, running) =>
+        {
+            _ui.SetTemperature(celsius, left, running);
+            _ui.SetTestOverlay(celsius, left, running, _heat.RedZoneSeconds, _heat.InChallenge);
+        };
         _heat.CriticalTemperature += celsius =>
         {
             _ui.SetMessage($"КРИТИЧНО: {celsius:0}°C! ДУЙ В ТЕЛЕФОН, КАК В КАРТРИДЖ! Телефон уже вибрирует от ужаса.");
         };
         _heat.TestFinished += (survived, summary) =>
         {
+            _ui.SetTestOverlayVisible(false);
             _ui.SetMessage(summary);
             RefreshBuildUi();
         };
@@ -303,6 +332,11 @@ public partial class Main : Node3D
         float repBonus = 1.0f + (_state.Reputation / 25) * 0.05f;
         float raw = (_build.GetTotalValueRub() * 1.6f + 250f)
             * GarageCatalog.SalePriceMultiplier(_state.GarageLevel) * repBonus;
+        if (_clientData is { IsIranianOrder: true })
+        {
+            raw *= 1.8f;
+        }
+
         return (int)raw;
     }
 
@@ -357,6 +391,23 @@ public partial class Main : Node3D
         if (_heat.StartChallenge(out string error))
         {
             _challengeRunning = true;
+            if (_clientData is { IsIranianOrder: true })
+            {
+                (int installed, bool fullSet) = _build.GetIranianStatus();
+                if (!fullSet)
+                {
+                    _heat.ScheduleExplosion(2.5f,
+                        $"СКАЧОК НАПРЯЖЕНИЯ: иранских деталей стоит {installed} из 3. Аккумулятор такое не прощает — ВЗРЫВ.");
+                    _ui.SetMessage("Аккумулятор подключили... Искры. Через пару секунд будет очень громко. (Иранский набор неполный!)");
+                }
+            }
+
+            if (_build.MayoShortCircuit)
+            {
+                _heat.ScheduleExplosion(4.0f,
+                    "КОРОТКОЕ ЗАМЫКАНИЕ: майонез на материнской плате дождался своего часа. ВЗРЫВ.");
+            }
+
             _sound.SetFan(true);
             _client.Say("Это он? Это КИБЕРПАНК?!");
             _ui.OpenBuildPanel();
@@ -446,6 +497,12 @@ public partial class Main : Node3D
             note += " Репутация +6.";
         }
 
+        if (_clientData.IsIranianOrder)
+        {
+            repDelta = 10;
+            note += " Спецзаказ закрыт: ПК от аккумулятора уехал, соседи в шоке. Репутация +10!";
+        }
+
         _state.AddReputation(repDelta);
 
         _state.AddMoney(paid);
@@ -495,6 +552,24 @@ public partial class Main : Node3D
         _build.BlowDustMultiplier = _state.OwnsTool(ToolsCatalog.Vacuum) ? 2.0f : 1.0f;
         _build.HasRealPaste = _state.OwnsTool(ToolsCatalog.RealPaste);
         _heat.PassiveCoolingPerSecond = _state.OwnsTool(ToolsCatalog.DeskFan) ? 1.6f : 0f;
+    }
+
+    private void OnGoToDump()
+    {
+        if (_heat.IsRunning)
+        {
+            _ui.SetMessage("Куда собрался? Тест идёт! Сначала не дай ПК умереть на глазах у публики.");
+            return;
+        }
+
+        if (_clientStage != ClientStage.None)
+        {
+            _ui.SetMessage("Клиент ждёт свой компьютер. Сначала дело — потом мусорные приключения.");
+            return;
+        }
+
+        SaveGame();
+        GetTree().ChangeSceneToFile("res://Scenes/Dump.tscn");
     }
 
     private void SaveGame(bool announce = false)
@@ -754,18 +829,29 @@ public partial class Main : Node3D
 
     private void OnPasteModePressed()
     {
-        _pasteMode = !_pasteMode;
-        if (_pasteMode && !_build.Installed.ContainsKey(PartType.Cpu))
+        if (!_build.Installed.ContainsKey(PartType.Cpu))
         {
-            _pasteMode = false;
             _ui.SetMessage("Мазать нечего: процессора на столе нет. Майонез пока побудет просто майонезом.");
-        }
-        else if (_pasteMode)
-        {
-            _ui.SetMessage("Режим майонеза ВКЛ. Води пальцем прямо по процессору на столе. Щедро, как в столовой.");
+            return;
         }
 
-        _ui.SetPasteState(_build.CpuPaste01, _pasteMode);
+        _ui.OpenMayoOverlay(_build.CpuPaste01);
+        _ui.SetMessage("Мажем как учили: зажми и води по процессору. Цель — покрыть 70–90%, за край не выезжай.");
+    }
+
+    private void OnMayoApplied(float coveragePercent, float leakPercent)
+    {
+        string result = _build.SetPasteResult(coveragePercent, leakPercent);
+        if (_build.MayoShortCircuit)
+        {
+            _ui.SetMessage(result + " При тесте это почти гарантированное короткое замыкание.");
+        }
+        else
+        {
+            _ui.SetMessage(result);
+        }
+
+        SaveGame();
         RefreshBuildUi();
     }
 
@@ -773,8 +859,14 @@ public partial class Main : Node3D
     {
         if (_heat.StartTest(out string error))
         {
+            if (_build.MayoShortCircuit)
+            {
+                _heat.ScheduleExplosion(4.0f,
+                    "КОРОТКОЕ ЗАМЫКАНИЕ: майонез на материнской плате дождался своего часа. ВЗРЫВ.");
+            }
+
             _sound.SetFan(true);
-            _ui.SetMessage("ТЕСТ ЗАПУЩЕН! Вентилятор взвыл, HDD застучал, температура полезла вверх. Дуй, если запахнет жареным.");
+            _ui.SetMessage("ТЕСТ ЗАПУЩЕН! Тапай «Охладить», следи за красной зоной: 3 секунды выше 88°C — и взрыв. Дуй, если запахнет жареным.");
         }
         else
         {
@@ -816,13 +908,7 @@ public partial class Main : Node3D
             && _build.Installed.TryGetValue(_build.Selected.Value, out BuildController.InstalledPart entry)
             && entry.NeedsHammer;
         _ui.SetHammerEnabled(canHammer);
-        _ui.SetPasteState(_build.CpuPaste01, _pasteMode);
-        if (_build.CpuHasPaste && _pasteMode)
-        {
-            _pasteMode = false;
-            _ui.SetMessage("Майонез нанесён! Процессор блестит, как салат. Так держать — в прямом смысле слова «держать».");
-            _ui.SetPasteState(_build.CpuPaste01, false);
-        }
+        _ui.SetPasteState(_build.CpuPaste01, false);
     }
 
     private void ShowFoundPart(PcPart part, Vector3 position)
@@ -858,24 +944,6 @@ public partial class Main : Node3D
         {
             _dragging = true;
             _build.UpdatePlacement(position, _cameraRig.Camera);
-            return;
-        }
-
-        if (_pasteMode)
-        {
-            _dragging = true;
-            if (_build.ApplyPasteSwipe(position, _cameraRig.Camera, relative.Length()))
-            {
-                _ui.SetPasteState(_build.CpuPaste01, true);
-                if (_build.CpuHasPaste)
-                {
-                    _pasteMode = false;
-                    _ui.SetPasteState(_build.CpuPaste01, false);
-                    _ui.SetMessage("Майонез нанесён как надо (70%+). Теперь кулер сверху — и можно в тест, храбрец.");
-                    RefreshBuildUi();
-                }
-            }
-
             return;
         }
 
@@ -916,11 +984,6 @@ public partial class Main : Node3D
 
             _ui.SetMessage(message);
             RefreshBuildUi();
-            return;
-        }
-
-        if (_pasteMode)
-        {
             return;
         }
 

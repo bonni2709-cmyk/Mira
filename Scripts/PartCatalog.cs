@@ -101,6 +101,23 @@ public static class PartCatalog
         return new PcPart(t.Name, t.Type, t.Quality, Math.Max(10, value), t.Tint, "Свалка", t.Description);
     }
 
+    /// <summary>Уникальный набор спецзаказа: выдаётся клиентом-иранцем в руки, а не находится.</summary>
+    public static PcPart[] CreateIranianSet()
+    {
+        return new[]
+        {
+            new PcPart("Провода от холодильника ЗИЛ", PartType.Motherboard, PartQuality.Fake, 150,
+                new Color(0.45f, 0.35f, 0.22f), "Спецзаказ",
+                "Медные, толстые, пережили три переезда и один пожар. Плата? Провода — вот плата.", iranian: true),
+            new PcPart("Блок питания из микроволновки", PartType.Psu, PartQuality.Fake, 190,
+                new Color(0.52f, 0.44f, 0.36f), "Спецзаказ",
+                "Выдаёт 12 вольт и лёгкий запах попкорна. От автомобильного аккумулятора — как родной.", iranian: true),
+            new PcPart("Процессор, работающий на керосине", PartType.Cpu, PartQuality.Fake, 230,
+                new Color(0.58f, 0.40f, 0.20f), "Спецзаказ",
+                "Тактовая частота измеряется в «примерно». Греется, как печка, работает, как часы.", iranian: true),
+        };
+    }
+
     public static PcPart CreateEpicFind(Random rng)
     {
         Template t = EpicTemplates[rng.Next(EpicTemplates.Length)];

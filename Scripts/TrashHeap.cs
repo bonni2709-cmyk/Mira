@@ -11,8 +11,10 @@ namespace TrashPcTycoon;
 public partial class TrashHeap : Node3D
 {
     private Node3D _heapVisual = null!;
+    private Label3D _sign = null!;
     private int _digCount;
     private bool _animating;
+    private bool _depleted;
 
     public const string GroupName = "trash_heap";
 
@@ -20,6 +22,16 @@ public partial class TrashHeap : Node3D
     {
         BuildVisual();
         BuildCollider();
+    }
+
+    public bool IsDepleted => _depleted;
+
+    /// <summary>Свалка (2.0): куча выработана — сплющивается и честно об этом сообщает.</summary>
+    public void SetDepleted()
+    {
+        _depleted = true;
+        _heapVisual.Scale = new Vector3(1f, 0.22f, 1f);
+        _sign.Text = "ПУСТО\nпривезут ещё";
     }
 
     /// <summary>Дёргает кучу, разбрасывает кубики мусора и слегка «проседает» каждые несколько копок.</summary>
@@ -32,7 +44,7 @@ public partial class TrashHeap : Node3D
         }
 
         _animating = true;
-        float baseScale = _digCount % 8 == 0 ? 1.0f : Mathf.Max(0.78f, 1.0f - _digCount * 0.015f);
+        float baseScale = _depleted ? 0.22f : (_digCount % 8 == 0 ? 1.0f : Mathf.Max(0.78f, 1.0f - _digCount * 0.015f));
         Tween tween = CreateTween();
         tween.TweenProperty(_heapVisual, "rotation_degrees", new Vector3(0, rng.Next(-7, 8), 0), 0.07);
         tween.TweenProperty(_heapVisual, "scale", Vector3.One * (baseScale * 0.94f), 0.07);
@@ -103,7 +115,7 @@ public partial class TrashHeap : Node3D
         screen.RotationDegrees = new Vector3(-8f, 32f, 6f);
         _heapVisual.AddChild(screen);
 
-        var sign = new Label3D
+        _sign = new Label3D
         {
             Text = "СВАЛКА\nтапни — копай",
             PixelSize = 0.007f,
@@ -114,7 +126,7 @@ public partial class TrashHeap : Node3D
             OutlineModulate = new Color(0.07f, 0.06f, 0.05f),
             Position = new Vector3(0, 1.95f, 0)
         };
-        _heapVisual.AddChild(sign);
+        _heapVisual.AddChild(_sign);
     }
 
     private void BuildCollider()

@@ -33,7 +33,7 @@ public enum PartQuality
 public sealed class PcPart
 {
     public PcPart(string name, PartType type, PartQuality quality, int valueRub,
-        Color tint, string source, string description)
+        Color tint, string source, string description, bool iranian = false)
     {
         Name = name;
         Type = type;
@@ -42,7 +42,11 @@ public sealed class PcPart
         Tint = tint;
         Source = source;
         Description = description;
+        Iranian = iranian;
     }
+
+    /// <summary>Деталь спецзаказа «Иранская сборка»: работает от автобатареи и на честном слове.</summary>
+    public bool Iranian { get; }
 
     public string Name { get; }
     public PartType Type { get; }

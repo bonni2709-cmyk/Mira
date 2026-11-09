@@ -24,6 +24,8 @@ public partial class HeatSystem : Node
     private bool _coolingActive;
     private bool _criticalAnnounced;
     private float _vibrateTimer;
+    private float _scheduledExplosion = -1f;
+    private string _scheduledReason = "";
 
     public float Temperature { get; private set; } = AmbientCelsius;
     /// <summary>Пиковая температура текущего запуска (для клиентов «чтобы не шумело»).</summary>
@@ -77,6 +79,7 @@ public partial class HeatSystem : Node
         SecondsLeft = TestDurationSeconds;
         Temperature = Mathf.Max(Temperature, AmbientCelsius);
         PeakTemperature = Temperature;
+        RedZoneSeconds = 0f;
         _build.SetFanSpinning(true);
         EmitTemperature();
         return true;
@@ -111,6 +114,7 @@ public partial class HeatSystem : Node
         SecondsLeft = ChallengeDurationSeconds;
         Temperature = Mathf.Max(Temperature, AmbientCelsius);
         PeakTemperature = Temperature;
+        RedZoneSeconds = 0f;
         _build.SetFanSpinning(true);
         EmitTemperature();
         return true;
@@ -143,6 +147,28 @@ public partial class HeatSystem : Node
         EmitTemperature();
     }
 
+    /// <summary>Секунды, проведённые в красной зоне (88°C+). Больше 3 — взрыв, даже если до 100 не дошло.</summary>
+    public float RedZoneSeconds { get; private set; }
+
+    /// <summary>Запланированный взрыв через delay секунд (иранская сборка, короткое замыкание).</summary>
+    public void ScheduleExplosion(float delaySeconds, string reason)
+    {
+        _scheduledExplosion = delaySeconds;
+        _scheduledReason = reason;
+    }
+
+    /// <summary>Немедленный взрыв с готовым объяснением для клиента и страховой.</summary>
+    public void ForceExplosion(string reason)
+    {
+        if (!IsRunning)
+        {
+            return;
+        }
+
+        Temperature = FailCelsius;
+        Finish(false, reason);
+    }
+
     /// <summary>Резкий трясочный удар по температуре во время теста.</summary>
     public void AddHeatShock()
     {
@@ -166,6 +192,35 @@ public partial class HeatSystem : Node
             float cooling = (_coolingActive ? 6.5f : 0f) + PassiveCoolingPerSecond;
             Temperature += (rate - cooling) * d;
             PeakTemperature = Mathf.Max(PeakTemperature, Temperature);
+
+            if (Temperature >= CriticalCelsius)
+            {
+                RedZoneSeconds += d;
+            }
+            else
+            {
+                RedZoneSeconds = 0f;
+            }
+
+            if (_scheduledExplosion > 0f)
+            {
+                _scheduledExplosion -= d;
+                if (_scheduledExplosion <= 0f)
+                {
+                    string reason = _scheduledReason;
+                    _scheduledExplosion = -1f;
+                    Finish(false, reason);
+                    EmitTemperature();
+                    return;
+                }
+            }
+
+            if (RedZoneSeconds >= 3.0f)
+            {
+                Finish(false, "Три секунды в красной зоне. Вентилятор сказал «я старался» — и ПК взорвался. Охлаждать надо было раньше, а не любоваться.");
+                EmitTemperature();
+                return;
+            }
 
             bool hddRumble = _build.Installed.TryGetValue(PartType.Hdd, out BuildController.InstalledPart hdd)
                 && hdd.Part.Quality == PartQuality.Trash;
@@ -218,6 +273,7 @@ public partial class HeatSystem : Node
     {
         IsRunning = false;
         InChallenge = false;
+        _scheduledExplosion = -1f;
         _build?.SetFanSpinning(false);
         _build?.SetSmoke(!survived || Temperature >= CriticalCelsius);
         _build?.MarkTestResult(survived);
