@@ -239,8 +239,17 @@ jobs:
           cd "$PROJECT_PATH"
           mkdir -p build
           set +e
-          godot --headless --verbose --export-debug "Android" "build/${EXPORT_NAME}.apk" > "$GITHUB_WORKSPACE/ci-export.log" 2>&1
-          code=$?
+          code=1
+          for attempt in 1 2 3; do
+            echo "Export attempt $attempt/3"
+            godot --headless --verbose --export-debug "Android" "build/${EXPORT_NAME}.apk" > "$GITHUB_WORKSPACE/ci-export.log" 2>&1
+            code=$?
+            if [ $code -eq 0 ] && [ -f "build/${EXPORT_NAME}.apk" ]; then
+              break
+            fi
+            echo "Attempt $attempt failed (exit $code), retrying after pause..."
+            sleep 25
+          done
           echo "EXPORT_EXIT=$code" | tee -a "$GITHUB_WORKSPACE/ci-export.log"
           i=0
           grep -E "ERROR|error|Exception|EXPORT_EXIT" "$GITHUB_WORKSPACE/ci-export.log" | head -n 9 | while IFS= read -r line; do
