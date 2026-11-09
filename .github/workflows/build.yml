@@ -197,10 +197,10 @@ jobs:
           cd "$PROJECT_PATH"
           TEMPLATES="$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable.mono"
           ls "$TEMPLATES" || true
-          mkdir -p android
-          cd android
+          mkdir -p android/build
+          cd android/build
           "$HOME/jdk/bin/jar" xf "$TEMPLATES/android_source.zip"
-          cd ..
+          cd ../..
           {
             echo "=== android tree ==="
             find android -maxdepth 2 | head -n 40
