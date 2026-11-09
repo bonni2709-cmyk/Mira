@@ -211,6 +211,14 @@ jobs:
           msg="$(sed 's/%/%25/g; s/\r/%0D/g' "$GITHUB_WORKSPACE/android-template.txt" | awk '{printf "%s%%0A", $0}')"
           echo "::error file=androidtemplate.txt,title=androidtemplate::$msg"
 
+      - name: Pre-download Gradle distribution (retry)
+        continue-on-error: true
+        run: |
+          cd android/build
+          for i in 1 2 3; do
+            ./gradlew --version && break || sleep 15
+          done
+
       - name: Export Android APK (debug)
         run: |
           cd "$PROJECT_PATH"
