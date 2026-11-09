@@ -114,6 +114,29 @@ jobs:
           path: ci-import.log
           if-no-files-found: ignore
 
+      - name: Install Java 17 (Temurin)
+        run: |
+          mkdir -p "$HOME/jdk"
+          curl -sSL "https://api.adoptium.net/v3/binary/latest/17/ga/linux/x64/jdk/hotspot/normal/eclipse" -o /tmp/jdk.tar.gz
+          tar -xzf /tmp/jdk.tar.gz -C "$HOME/jdk" --strip-components=1
+          echo "JAVA_HOME=$HOME/jdk" >> "$GITHUB_ENV"
+          echo "$HOME/jdk/bin" >> "$GITHUB_PATH"
+          "$HOME/jdk/bin/java" -version
+
+      - name: Install Android SDK (platform 34)
+        run: |
+          SDK="$HOME/android-sdk"
+          mkdir -p "$SDK/cmdline-tools"
+          curl -sSL "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip" -o /tmp/cmdtools.zip
+          cd /tmp && "$HOME/jdk/bin/jar" xf cmdtools.zip
+          mv /tmp/cmdline-tools "$SDK/cmdline-tools/latest"
+          export ANDROID_HOME="$SDK" ANDROID_SDK_ROOT="$SDK"
+          echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
+          yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$SDK" --licenses > /dev/null || true
+          "$SDK/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$SDK" "platforms;android-34" "build-tools;34.0.0" "platform-tools"
+          ls "$SDK"
+
       - name: Configure Android export settings
         run: |
           {
@@ -146,38 +169,20 @@ jobs:
           SETTINGS="$(find "$HOME/.config/godot" -name "editor_settings-*.tres" 2>/dev/null | head -n 1 || true)"
           echo "Editor settings file: $SETTINGS"
           if [ -n "$SETTINGS" ]; then
-            python3 - "$SETTINGS" "$SDK_PATH" "$JAVA_PATH" "$KEYSTORE" <<'PYEOF'
-          import pathlib, sys
-          settings, sdk, java, keystore = sys.argv[1:5]
-          path = pathlib.Path(settings)
-          text = path.read_text()
-          values = {
-              "export/android/android_sdk_path": sdk,
-              "export/android/java_sdk_path": java,
-              "export/android/debug_keystore": keystore,
-              "export/android/debug_keystore_pass": "android",
-          }
-          lines = text.splitlines()
-          for key, value in values.items():
-              if not value:
-                  continue
-              entry = f'{key} = "{value}"'
-              replaced = False
-              for i, line in enumerate(lines):
-                  if line.startswith(key + " "):
-                      lines[i] = entry
-                      replaced = True
-                      break
-              if not replaced:
-                  for i, line in enumerate(lines):
-                      if line.strip() == "[resource]":
-                          lines.insert(i + 1, entry)
-                          break
-                  else:
-                      lines.append(entry)
-          path.write_text("\n".join(lines) + "\n")
-          print("EditorSettings patched")
-          PYEOF
+            set_setting() {
+              key="$1"; value="$2"
+              if [ -z "$value" ]; then return 0; fi
+              if grep -q "^$key " "$SETTINGS"; then
+                sed -i "s|^$key = .*|$key = \"$value\"|" "$SETTINGS"
+              else
+                sed -i "/^\[resource\]/a $key = \"$value\"" "$SETTINGS"
+              fi
+            }
+            set_setting "export/android/android_sdk_path" "$SDK_PATH"
+            set_setting "export/android/java_sdk_path" "$JAVA_PATH"
+            set_setting "export/android/debug_keystore" "$KEYSTORE"
+            set_setting "export/android/debug_keystore_pass" "android"
+            grep "^export/android" "$SETTINGS" || true
           fi
 
       - name: Export Android APK (debug)
