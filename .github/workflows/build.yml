@@ -125,10 +125,18 @@ jobs:
       - name: Install Java 17 (Temurin)
         run: |
           mkdir -p "$HOME/jdk"
-          for i in 1 2 3; do
-            curl -fsSL "https://api.adoptium.net/v3/binary/latest/17/ga/linux/x64/jdk/hotspot/normal/eclipse" -o /tmp/jdk.tar.gz \
-              && tar -tzf /tmp/jdk.tar.gz > /dev/null && break || sleep 10
+          ok=""
+          for url in \
+            "https://corretto.aws/downloads/latest/amazon-corretto-17-x64-linux-jdk.tar.gz" \
+            "https://api.adoptium.net/v3/binary/latest/17/ga/linux/x64/jdk/hotspot/normal/eclipse" \
+            "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.13%2B11/OpenJDK17U-jdk_x64_linux_hotspot_17.0.13_11.tar.gz"; do
+            for i in 1 2 3; do
+              if curl -fsSL "$url" -o /tmp/jdk.tar.gz && tar -tzf /tmp/jdk.tar.gz > /dev/null; then ok=1; break; fi
+              sleep 8
+            done
+            if [ -n "$ok" ]; then break; fi
           done
+          if [ -z "$ok" ]; then echo "JDK download failed from all mirrors"; exit 1; fi
           tar -xzf /tmp/jdk.tar.gz -C "$HOME/jdk" --strip-components=1
           echo "JAVA_HOME=$HOME/jdk" >> "$GITHUB_ENV"
           echo "$HOME/jdk/bin" >> "$GITHUB_PATH"
