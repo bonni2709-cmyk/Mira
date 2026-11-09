@@ -1,0 +1,15 @@
+# Godot 4 / C#
+.godot/
+.mono/
+bin/
+obj/
+build/
+export/
+*.apk
+*.aab
+*.user
+.vs/
+.idea/
+*.suo
+.DS_Store
+android/build/

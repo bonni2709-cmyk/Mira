@@ -1,0 +1,63 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - "arena/**"
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  GODOT_VERSION: "4.3"
+  EXPORT_NAME: "Trash-PC-Tycoon"
+  PROJECT_PATH: "."
+
+jobs:
+  export-android:
+    name: Export Android APK (Godot 4.3, C#)
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:mono-4.3
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Show toolchain
+        run: |
+          godot --version
+          dotnet --version
+          java -version
+
+      - name: Setup export templates
+        run: |
+          mkdir -p "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable.mono"
+          if [ -d "/root/.local/share/godot/export_templates/${GODOT_VERSION}.stable.mono" ]; then
+            cp -r "/root/.local/share/godot/export_templates/${GODOT_VERSION}.stable.mono/." \
+                  "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable.mono/"
+          fi
+          ls "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable.mono"
+
+      - name: Import project
+        run: |
+          cd "$PROJECT_PATH"
+          godot --headless --verbose --import
+
+      - name: Export Android APK (debug)
+        run: |
+          cd "$PROJECT_PATH"
+          mkdir -p build
+          godot --headless --verbose --export-debug "Android" "build/${EXPORT_NAME}.apk"
+          ls -lh build/
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Trash-PC-Tycoon-debug-apk
+          path: build/*.apk
+          if-no-files-found: error

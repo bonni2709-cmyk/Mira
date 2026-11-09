@@ -1,0 +1,45 @@
+[gd_scene load_steps=10 format=3 uid="uid://trashpcmain001"]
+
+[ext_resource type="Script" path="res://Scripts/Main.cs" id="1_main"]
+[ext_resource type="Script" path="res://Scripts/IsoCameraRig.cs" id="2_cam"]
+[ext_resource type="Script" path="res://Scripts/GarageBuilder.cs" id="3_garage"]
+[ext_resource type="Script" path="res://Scripts/TrashHeap.cs" id="4_heap"]
+[ext_resource type="Script" path="res://Scripts/DeliveryBox.cs" id="5_box"]
+[ext_resource type="Script" path="res://Scripts/UI/MainUI.cs" id="6_ui"]
+[ext_resource type="Script" path="res://Scripts/BuildController.cs" id="7_build"]
+[ext_resource type="Script" path="res://Scripts/HeatSystem.cs" id="8_heat"]
+[ext_resource type="Script" path="res://Scripts/AndroidSensors.cs" id="9_sensors"]
+
+[node name="Main" type="Node3D"]
+script = ExtResource("1_main")
+
+[node name="CameraRig" type="Node3D" parent="."]
+script = ExtResource("2_cam")
+
+[node name="Camera3D" type="Camera3D" parent="CameraRig"]
+projection = 1
+size = 13.0
+
+[node name="Garage" type="Node3D" parent="."]
+script = ExtResource("3_garage")
+
+[node name="TrashHeap" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.2, 0, 2.6)
+script = ExtResource("4_heap")
+
+[node name="DeliveryBox" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.6, 1.11, -3.7)
+script = ExtResource("5_box")
+
+[node name="BuildController" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3, 1.02, 1.0)
+script = ExtResource("7_build")
+
+[node name="HeatSystem" type="Node" parent="."]
+script = ExtResource("8_heat")
+
+[node name="AndroidSensors" type="Node" parent="."]
+script = ExtResource("9_sensors")
+
+[node name="UI" type="CanvasLayer" parent="."]
+script = ExtResource("6_ui")

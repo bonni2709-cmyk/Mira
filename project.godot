@@ -1,0 +1,49 @@
+; Engine configuration file.
+; Trash-PC Tycoon 3D — Module 1 (Godot 4.3, C# / .NET 8)
+
+config_version=5
+
+[application]
+
+config/name="Trash-PC Tycoon 3D"
+config/description="Комедийный 3D-симулятор: собери ПК из мусора и продай, пока он не сгорел. Pixel 3D, грязный гараж, никакой неоновой мишуры."
+run/main_scene="res://Scenes/Main.tscn"
+config/features=PackedStringArray("4.3", "C#", "Mobile")
+config/icon="res://icon.svg"
+boot_splash/bg_color=Color(0.09, 0.075, 0.06, 1)
+
+[autoload]
+
+GameState="*res://Scripts/GameState.cs"
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+window/handheld/orientation="landscape"
+
+[dotnet]
+
+project/assembly_name="Mira"
+
+[input_devices]
+
+pointing/emulate_touch_from_mouse=true
+pointing/emulate_mouse_from_touch=true
+
+[physics]
+
+3d/run_on_separate_thread=false
+common/physics_ticks_per_second=60
+
+[rendering]
+
+renderer/rendering_method="mobile"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/canvas_textures/default_texture_filter=0
+textures/default_filters/use_nearest_mipmap_filter=true
+environment/defaults/default_clear_color=Color(0.07, 0.06, 0.05, 1)
+anti_aliasing/quality/msaa_3d=0
+anti_aliasing/quality/screen_space_aa=0
