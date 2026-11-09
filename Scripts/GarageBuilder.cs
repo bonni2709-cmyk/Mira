@@ -1,3 +1,4 @@
+using System;
 using Godot;
 
 namespace TrashPcTycoon;
@@ -9,8 +10,13 @@ namespace TrashPcTycoon;
 /// </summary>
 public partial class GarageBuilder : Node3D
 {
+    private readonly Random _flickerRng = new();
     private OmniLight3D _bulbLight = null!;
     private MeshInstance3D _bulbMesh = null!;
+    private float _bulbBaseEnergy = 1.5f;
+    private float _flickerTime;
+    private float _dipTimer = 3f;
+    private float _dipLeft;
     private Node3D _level2 = null!;
     private Node3D _level3 = null!;
     private Node3D _cat = null!;
@@ -31,7 +37,44 @@ public partial class GarageBuilder : Node3D
     {
         _level2.Visible = level >= 2;
         _level3.Visible = level >= 3;
-        _bulbLight.LightEnergy = level switch { >= 3 => 1.85f, 2 => 1.65f, _ => 1.5f };
+        _bulbBaseEnergy = level switch { >= 3 => 1.85f, 2 => 1.65f, _ => 1.5f };
+        _bulbLight.LightEnergy = _bulbBaseEnergy;
+    }
+
+    /// <summary>
+    /// Мерцание лампочки (4.0/Модуль 2): лёгкое дрожание яркости и редкие провалы —
+    /// проводка в гараже держится на честном слове и изоленте. Во время блэкаута не трогаем.
+    /// </summary>
+    public override void _Process(double delta)
+    {
+        if (!_bulbLight.Visible)
+        {
+            return;
+        }
+
+        float dt = (float)delta;
+        _flickerTime += dt;
+        float wobble = Mathf.Sin(_flickerTime * 41f) * 0.35f + Mathf.Sin(_flickerTime * 13.7f + 1.3f) * 0.65f;
+        float factor = 1.0f + wobble * 0.035f;
+
+        _dipTimer -= dt;
+        if (_dipTimer <= 0f)
+        {
+            _dipTimer = 2.5f + (float)_flickerRng.NextDouble() * 6.0f;
+            _dipLeft = 0.06f + (float)_flickerRng.NextDouble() * 0.10f;
+        }
+
+        if (_dipLeft > 0f)
+        {
+            _dipLeft -= dt;
+            factor *= 0.55f;
+        }
+
+        _bulbLight.LightEnergy = _bulbBaseEnergy * factor;
+        if (_bulbMesh.MaterialOverride is StandardMaterial3D mat)
+        {
+            mat.EmissionEnergyMultiplier = 0.7f * factor;
+        }
     }
 
     /// <summary>Событие «отключили свет»: лампочка гаснет на время, гараж не сдаётся.</summary>
@@ -109,7 +152,7 @@ public partial class GarageBuilder : Node3D
 
     private void BuildRoom()
     {
-        AddBox("Floor", new Vector3(0, -0.11f, 0), new Vector3(14f, 0.22f, 11f), PixelTextureFactory.Concrete());
+        AddBox("Floor", new Vector3(0, -0.11f, 0), new Vector3(14f, 0.22f, 11f), PixelTextureFactory.GarageFloor());
         AddBox("BackWall", new Vector3(0, 2.5f, -5.45f), new Vector3(14f, 5.2f, 0.3f), PixelTextureFactory.Wall());
         AddBox("LeftWall", new Vector3(-6.85f, 2.5f, 0), new Vector3(0.3f, 5.2f, 11f), PixelTextureFactory.Wall());
         AddBox("BackWallSkirting", new Vector3(0, 0.18f, -5.25f), new Vector3(14f, 0.35f, 0.08f), PixelTextureFactory.DarkMetal());

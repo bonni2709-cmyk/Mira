@@ -31,6 +31,45 @@ public static class PixelTextureFactory
     public static StandardMaterial3D Wood() =>
         MakeMaterial(BaseColor: new Color(0.45f, 0.32f, 0.18f), seed: 67, speckles: 430, cracks: 5);
 
+    /// <summary>
+    /// Пол гаража (4.0/Модуль 2): NoiseTexture2D — масло, грязь и века не мытья.
+    /// Пиксельная фильтрация сохраняет стиль, шум убирает «пластиковость» бетона.
+    /// </summary>
+    public static StandardMaterial3D GarageFloor()
+    {
+        var noise = new FastNoiseLite
+        {
+            NoiseType = FastNoiseLite.NoiseTypeEnum.Perlin,
+            Frequency = 0.055f,
+            FractalOctaves = 4,
+            FractalGain = 0.55f,
+            Seed = 1234
+        };
+
+        var ramp = new Gradient();
+        ramp.SetColor(0, new Color(0.14f, 0.125f, 0.105f));
+        ramp.AddPoint(0.45f, new Color(0.30f, 0.27f, 0.21f));
+        ramp.AddPoint(0.75f, new Color(0.26f, 0.21f, 0.16f));
+        ramp.SetColor(1, new Color(0.40f, 0.35f, 0.27f));
+
+        var texture = new NoiseTexture2D
+        {
+            Width = 256,
+            Height = 256,
+            Noise = noise,
+            ColorRamp = ramp,
+            Seamless = true
+        };
+
+        return new StandardMaterial3D
+        {
+            AlbedoTexture = texture,
+            Roughness = 0.96f,
+            TextureFilter = BaseMaterial3D.TextureFilterEnum.Nearest,
+            Uv1Scale = new Vector3(3.0f, 3.0f, 3.0f)
+        };
+    }
+
     /// <summary>Корпус ПК: родной цвет, щедро тронутый ржавчиной (3.0/Модуль 2).</summary>
     public static StandardMaterial3D RustedTint(Color tint)
     {

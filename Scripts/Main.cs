@@ -1115,7 +1115,16 @@ public partial class Main : Node3D
             SsaoIntensity = 1.6f,
             AdjustmentEnabled = true,
             AdjustmentContrast = 1.06f,
-            AdjustmentSaturation = 1.05f
+            AdjustmentSaturation = 1.05f,
+            // 4.0/Модуль 2: свечение лампочки и пыльный воздух.
+            // Glow работает и на мобильном Compatibility; объёмный туман — только Forward+,
+            // на телефоне движок его пропустит, а виньетка с полумраком атмосферу удержат.
+            GlowEnabled = true,
+            GlowIntensity = 0.55f,
+            GlowStrength = 0.9f,
+            GlowBloom = 0.12f,
+            VolumetricFogEnabled = true,
+            VolumetricFogDensity = 0.02f
         };
         // Режимы фона и рассеянного света: 1 = Color у background_mode, 2 = Color у ambient_light_source.
         // Через Set(), чтобы не зависеть от имён вложенных enum в биндингах GodotSharp.

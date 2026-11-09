@@ -13,9 +13,14 @@ public static class PartVisualFactory
     {
         var root = new Node3D { Name = "PartVisual" };
         // 3.0/Модуль 2: корпус — ржавый по-настоящему, остальные детали честно крашены.
-        StandardMaterial3D body = part.Type == PartType.ComputerCase
-            ? PixelTextureFactory.RustedTint(part.Tint)
-            : PixelTextureFactory.Flat(part.Tint);
+        StandardMaterial3D body = PixelTextureFactory.Flat(part.Tint);
+        if (part.Type == PartType.ComputerCase)
+        {
+            // 4.0/Модуль 2: корпус — металл, а не крашеное дерево: ржавчина + металлический отлив.
+            body = PixelTextureFactory.RustedTint(part.Tint);
+            body.Metallic = 0.45f;
+            body.Roughness = 0.55f;
+        }
         StandardMaterial3D dark = PixelTextureFactory.Flat(new Color(0.16f, 0.15f, 0.14f));
 
         Vector3 size = part.Type switch
@@ -51,6 +56,13 @@ public static class PartVisualFactory
         {
             root.AddChild(Box("SidePanelLine", new Vector3(0.44f, 0.85f, 0),
                 new Vector3(0.03f, 0.9f, 1.25f), dark));
+            // Вентиляционная решётка: шесть прорезей, через которые ПК дышит пылью гаража.
+            for (int i = 0; i < 6; i++)
+            {
+                root.AddChild(Box($"VentSlit{i}", new Vector3(0.445f, 0.38f + i * 0.13f, -0.30f),
+                    new Vector3(0.02f, 0.055f, 0.60f), dark));
+            }
+
             root.AddChild(Cylinder("PowerButton", new Vector3(0.44f, 1.15f, 0.45f),
                 radius: 0.08f, height: 0.05f, PixelTextureFactory.Flat(new Color(0.55f, 0.20f, 0.14f))));
         }

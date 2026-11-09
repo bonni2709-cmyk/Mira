@@ -33,6 +33,16 @@ public partial class IsoCameraRig : Node3D
         }
 
         _camera.Projection = Camera3D.ProjectionType.Orthogonal;
+        // 4.0/Модуль 2: лёгкий Depth of Field — стол в фокусе, задняя стена мягче.
+        // На мобильном compatibility движок атрибут пропустит; на Forward+ заработает сам.
+        _camera.Attributes = new CameraAttributesPractical
+        {
+            DofBlurFarEnabled = true,
+            DofBlurFarBegin = 16.0f,
+            DofBlurFarTransition = 9.0f,
+            DofBlurNearEnabled = false,
+            DofBlurAmount = 0.07f
+        };
         _camera.Size = 13.0f;
         _camera.Near = 0.05f;
         _camera.Far = 100.0f;
