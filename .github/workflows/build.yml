@@ -114,6 +114,72 @@ jobs:
           path: ci-import.log
           if-no-files-found: ignore
 
+      - name: Configure Android export settings
+        run: |
+          {
+            echo "ANDROID_HOME=${ANDROID_HOME:-unset} ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT:-unset}"
+            echo "which java: $(which java || echo missing)  keytool: $(which keytool || echo missing)"
+            echo "jvm dirs:"; ls /usr/lib/jvm 2>/dev/null || true
+            echo "sdk candidates:"; ls -d /usr/lib/android-sdk /opt/android-sdk /root/android-sdk "$HOME/android-sdk" 2>/dev/null || true
+            find / -maxdepth 5 -name "sdkmanager" 2>/dev/null | head -n 3 || true
+            find / -maxdepth 6 -path "*/bin/java" 2>/dev/null | head -n 3 || true
+          } > "$GITHUB_WORKSPACE/android-diag.txt" 2>&1 || true
+          msg="$(sed 's/%/%25/g; s/\r/%0D/g' "$GITHUB_WORKSPACE/android-diag.txt" | awk '{printf "%s%%0A", $0}')"
+          echo "::error file=androiddiag.txt,title=androiddiag::$msg"
+
+          SDK_PATH="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}"
+          if [ -z "$SDK_PATH" ]; then
+            for cand in /usr/lib/android-sdk /opt/android-sdk /root/android-sdk "$HOME/android-sdk"; do
+              if [ -d "$cand" ]; then SDK_PATH="$cand"; break; fi
+            done
+          fi
+          JAVA_BIN="$(find / -maxdepth 6 -path "*/bin/java" 2>/dev/null | head -n 1 || true)"
+          JAVA_PATH=""
+          if [ -n "$JAVA_BIN" ]; then JAVA_PATH="$(dirname "$(dirname "$JAVA_BIN")")"; fi
+          echo "Resolved SDK=$SDK_PATH JAVA_HOME=$JAVA_PATH"
+
+          KEYSTORE="$HOME/debug.keystore"
+          if [ -n "$JAVA_PATH" ] && [ ! -f "$KEYSTORE" ]; then
+            "$JAVA_PATH/bin/keytool" -keyalg RSA -genkeypair -alias androiddebugkey               -keypass android -keystore "$KEYSTORE" -storepass android               -dname "CN=Android Debug,O=Android,C=US" -validity 9999 || true
+          fi
+
+          SETTINGS="$(find "$HOME/.config/godot" -name "editor_settings-*.tres" 2>/dev/null | head -n 1 || true)"
+          echo "Editor settings file: $SETTINGS"
+          if [ -n "$SETTINGS" ]; then
+            python3 - "$SETTINGS" "$SDK_PATH" "$JAVA_PATH" "$KEYSTORE" <<'PYEOF'
+          import pathlib, sys
+          settings, sdk, java, keystore = sys.argv[1:5]
+          path = pathlib.Path(settings)
+          text = path.read_text()
+          values = {
+              "export/android/android_sdk_path": sdk,
+              "export/android/java_sdk_path": java,
+              "export/android/debug_keystore": keystore,
+              "export/android/debug_keystore_pass": "android",
+          }
+          lines = text.splitlines()
+          for key, value in values.items():
+              if not value:
+                  continue
+              entry = f'{key} = "{value}"'
+              replaced = False
+              for i, line in enumerate(lines):
+                  if line.startswith(key + " "):
+                      lines[i] = entry
+                      replaced = True
+                      break
+              if not replaced:
+                  for i, line in enumerate(lines):
+                      if line.strip() == "[resource]":
+                          lines.insert(i + 1, entry)
+                          break
+                  else:
+                      lines.append(entry)
+          path.write_text("\n".join(lines) + "\n")
+          print("EditorSettings patched")
+          PYEOF
+          fi
+
       - name: Export Android APK (debug)
         run: |
           cd "$PROJECT_PATH"
@@ -132,6 +198,17 @@ jobs:
           echo "::error file=exporttail.txt,title=exporttail::$msg"
           ls -lh build/
           exit $code
+
+      - name: Report export compile errors
+        if: always()
+        continue-on-error: true
+        run: |
+          i=0
+          grep -E "error CS[0-9]+|error MSB|Build FAILED|not compiling" "$GITHUB_WORKSPACE/ci-export.log" 2>/dev/null | head -n 9 | while IFS= read -r line; do
+            i=$((i+1))
+            safe="$(printf '%s' "$line" | sed 's/%/%25/g; s/\r/%0D/g')"
+            echo "::error file=cerr$i.txt,title=cerr::$safe"
+          done
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
