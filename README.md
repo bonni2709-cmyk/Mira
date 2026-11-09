@@ -98,13 +98,22 @@ Scripts/IsoCameraRig.cs   изометрическая ортографичес�
 Scripts/GarageBuilder.cs  гараж, верстак, лампочка
 Scripts/TrashHeap.cs      куча мусора и анимация копания
 Scripts/DeliveryBox.cs    коробка AliExpress на верстаке
-Scripts/UI/MainUI.cs      меню, HUD, инвентарь, магазин
-.github/workflows/build.yml  сборка APK в CI
+Scripts/UI/MainUI.cs      меню, HUD, инвентарь, магазин, сборка, клиент
+Scripts/BuildController.cs  стол сборки: слоты, drag-and-drop, молоток, майонез, пыль
+Scripts/HeatSystem.cs     тест 30 сек и челлендж «Киберпанк» 60 сек, вибрация, дым
+Scripts/AndroidSensors.cs микрофон (продувка) и акселерометр (тряска)
+Scripts/ClientController.cs 3D-школьник: приход, ожидание, уход
+Scripts/ClientCatalog.cs  клиенты, бюджеты копилок, реплики
+Scripts/ToolsCatalog.cs   покупаемые инструменты и их эффекты
+Scripts/SoundSystem.cs    синтезированные звуки: скрип, молоток, вентилятор, взрыв
+Scripts/SaveSystem.cs     JSON-сейв в user:// (деньги, детали, инструменты, статистика)
+Tools/generate_icon.py    пиксельная иконка (Pillow): ржавый системник в коробке
+icon.png, android_icons/  сгенерированные иконки, прописаны в project.godot и export_presets.cfg
+.github/workflows/build.yml  сборка APK в CI (артефакт Trash-PC-Tycoon-debug-apk)
 ```
 
-## Дальше
+## Готово
 
-- **Модуль 3:** клиенты и диалоги, мини-игра «охлади ПК за 60 секунд», экономика,
-  звуки, сохранения, пиксельная иконка приложения, финальный APK.
-
-Работа идёт строго по модулям: следующий модуль — только после команды «Дальше».
+Все три модуля завершены: свалка и AliExpress → сборка с молотком, майонезом и
+датчиками → клиент, Киберпанк-челлендж, продажа, инструменты, звуки, сохранения
+и APK из GitHub Actions.

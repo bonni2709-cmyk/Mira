@@ -28,20 +28,26 @@ jobs:
         with:
           lfs: true
 
-      - name: Show toolchain
+      - name: Show toolchain (diagnostics)
+        continue-on-error: true
         run: |
-          godot --version
-          dotnet --version
-          java -version
+          echo "PATH=$PATH"
+          which godot || true
+          ls /usr/local/bin || true
+          godot --version || true
+          dotnet --version || true
+          java -version || true
+          echo "ANDROID_HOME=${ANDROID_HOME:-unset} ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT:-unset}"
 
       - name: Setup export templates
         run: |
-          mkdir -p "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable.mono"
-          if [ -d "/root/.local/share/godot/export_templates/${GODOT_VERSION}.stable.mono" ]; then
-            cp -r "/root/.local/share/godot/export_templates/${GODOT_VERSION}.stable.mono/." \
-                  "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable.mono/"
+          DEST="$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable.mono"
+          mkdir -p "$DEST"
+          FOUND="$(find / -type d -name "${GODOT_VERSION}.stable.mono" -path "*export_templates*" 2>/dev/null | head -n 1 || true)"
+          if [ -n "$FOUND" ] && [ "$FOUND" != "$DEST" ]; then
+            cp -r "$FOUND/." "$DEST/"
           fi
-          ls "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable.mono"
+          ls "$DEST"
 
       - name: Regenerate pixel app icon (Pillow)
         continue-on-error: true
