@@ -16,8 +16,9 @@ public partial class DumpUI : CanvasLayer
     private Label _messageLabel = null!;
     private Label _heapsLabel = null!;
 
-    private static readonly Color PanelColor = new(0.13f, 0.11f, 0.085f, 0.96f);
-    private static readonly Color TextColor = new(0.92f, 0.87f, 0.74f, 1f);
+    // 2.0/Модуль 3: glassmorphism, как в гараже.
+    private static readonly Color PanelColor = new(0.075f, 0.085f, 0.11f, 0.68f);
+    private static readonly Color TextColor = new(0.97f, 0.98f, 1.0f, 1f);
 
     public override void _Ready()
     {
@@ -97,10 +98,13 @@ public partial class DumpUI : CanvasLayer
         return new StyleBoxFlat
         {
             BgColor = PanelColor,
-            BorderColor = new Color(0.45f, 0.34f, 0.20f),
-            BorderWidthLeft = 3, BorderWidthRight = 3, BorderWidthTop = 3, BorderWidthBottom = 3,
-            CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4,
-            ContentMarginLeft = 14, ContentMarginRight = 14, ContentMarginTop = 10, ContentMarginBottom = 10
+            BorderColor = new Color(1f, 1f, 1f, 0.30f),
+            BorderWidthLeft = 2, BorderWidthRight = 2, BorderWidthTop = 2, BorderWidthBottom = 2,
+            CornerRadiusTopLeft = 12, CornerRadiusTopRight = 12, CornerRadiusBottomLeft = 12, CornerRadiusBottomRight = 12,
+            ContentMarginLeft = 16, ContentMarginRight = 16, ContentMarginTop = 12, ContentMarginBottom = 12,
+            ShadowColor = new Color(0f, 0f, 0f, 0.35f),
+            ShadowSize = 6,
+            ShadowOffset = new Vector2(0, 3)
         };
     }
 
@@ -111,8 +115,10 @@ public partial class DumpUI : CanvasLayer
         button.AddThemeFontSizeOverride("font_size", 21);
         var normal = new StyleBoxFlat
         {
-            BgColor = new Color(0.38f, 0.27f, 0.16f),
-            CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4, CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4,
+            BgColor = new Color(0.16f, 0.19f, 0.24f, 0.78f),
+            BorderColor = new Color(1f, 1f, 1f, 0.35f),
+            BorderWidthLeft = 1, BorderWidthRight = 1, BorderWidthTop = 1, BorderWidthBottom = 1,
+            CornerRadiusTopLeft = 9, CornerRadiusTopRight = 9, CornerRadiusBottomLeft = 9, CornerRadiusBottomRight = 9,
             ContentMarginLeft = 14, ContentMarginRight = 14, ContentMarginTop = 8, ContentMarginBottom = 8
         };
         button.AddThemeStyleboxOverride("normal", normal);

@@ -1,3 +1,4 @@
+using System;
 using Godot;
 
 namespace TrashPcTycoon;
@@ -10,8 +11,10 @@ namespace TrashPcTycoon;
 public partial class IsoCameraRig : Node3D
 {
     private Camera3D _camera = null!;
+    private readonly Random _shakeRng = new();
     private float _yawRad = Mathf.DegToRad(45.0f);
     private float _distance = 20.0f;
+    private float _shakeStrength;
 
     private const float ElevationRad = 0.61548f; // asin(1/sqrt(3)) — честная изометрия
     private const float MinSize = 8.0f;
@@ -38,6 +41,33 @@ public partial class IsoCameraRig : Node3D
     public void Zoom(float deltaSize)
     {
         _camera.Size = Mathf.Clamp(_camera.Size + deltaSize, MinSize, MaxSize);
+    }
+
+    /// <summary>Screen shake (2.0/Модуль 3): взрыв — сильно, молоток — чуть-чуть.</summary>
+    public void AddShake(float strength)
+    {
+        _shakeStrength = Mathf.Max(_shakeStrength, strength);
+    }
+
+    public override void _Process(double delta)
+    {
+        if (_shakeStrength <= 0.002f)
+        {
+            return;
+        }
+
+        _shakeStrength = Mathf.Max(0f, _shakeStrength - (float)delta * 1.9f);
+        ApplyTransform();
+        if (_shakeStrength <= 0.002f)
+        {
+            // Тряска кончилась — камера вернулась в честную изометрию.
+            return;
+        }
+        _camera.Position += new Vector3(
+            (float)(_shakeRng.NextDouble() * 2 - 1),
+            (float)(_shakeRng.NextDouble() * 2 - 1) * 0.7f,
+            (float)(_shakeRng.NextDouble() * 2 - 1)) * _shakeStrength * 0.45f;
+        _camera.RotationDegrees += new Vector3(0, 0, (float)(_shakeRng.NextDouble() * 2 - 1) * _shakeStrength * 1.4f);
     }
 
     private void ApplyTransform()

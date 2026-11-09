@@ -52,6 +52,12 @@ public partial class BuildController : Node3D
     /// <summary>2.0/Модуль 2: стоит ли в сборке RGB-лента (её жаждут мажоры).</summary>
     public bool HasRgb => _installed.ContainsKey(PartType.RgbStrip);
 
+    /// <summary>2.0/Модуль 3: в сборке есть HDD — во время теста он будет скрипеть.</summary>
+    public bool HasHdd => _installed.ContainsKey(PartType.Hdd);
+
+    /// <summary>2.0/Модуль 3: попал ли последний удар молотка по делу (для звука и тряски).</summary>
+    public bool LastHammerLanded { get; private set; }
+
     private static readonly Dictionary<PartType, Vector3> SlotPositions = new()
     {
         { PartType.ComputerCase, new Vector3(-1.45f, 0f, 0f) },
@@ -255,6 +261,7 @@ public partial class BuildController : Node3D
 
     public string HammerSelected()
     {
+        LastHammerLanded = false;
         if (_selected == null || !_installed.TryGetValue(_selected.Value, out InstalledPart entry))
         {
             return "Сначала тапни по детали на столе — молоток сам цель не выбирает.";
@@ -265,6 +272,7 @@ public partial class BuildController : Node3D
             return $"«{entry.Part.Name}» и так сидит в слоте. Молоток по ней — это уже не ремонт, а месть.";
         }
 
+        LastHammerLanded = true;
         entry.HammerHits++;
         Input.VibrateHandheld(90);
 
@@ -535,7 +543,65 @@ public partial class BuildController : Node3D
             {
                 SpawnSmokePuff();
             }
+
+            SpawnExplosionBurst();
         }
+    }
+
+    /// <summary>
+    /// Частицы взрыва (2.0/Модуль 3): осколки, искры и вспышка. Никакого неона —
+    /// только честный оранжевый бада-бум и серая копоть.
+    /// </summary>
+    private void SpawnExplosionBurst()
+    {
+        Vector3 from = _installed.TryGetValue(PartType.Cpu, out InstalledPart cpu)
+            ? ToLocal(cpu.Visual.GlobalPosition) + new Vector3(0, 0.5f, 0)
+            : new Vector3(0, 0.6f, 0);
+
+        var material = new ParticleProcessMaterial
+        {
+            Direction = new Vector3(0, 1, 0),
+            Spread = 55f,
+            InitialVelocityMin = 3.0f,
+            InitialVelocityMax = 6.5f,
+            Gravity = new Vector3(0, -6.5f, 0),
+            ScaleMin = 0.05f,
+            ScaleMax = 0.13f,
+            Color = new Color(0.95f, 0.55f, 0.20f)
+        };
+
+        var mesh = new BoxMesh { Size = new Vector3(0.09f, 0.09f, 0.09f) };
+        mesh.Material = PixelTextureFactory.Flat(new Color(0.85f, 0.45f, 0.18f), 0.7f);
+
+        var particles = new GPUParticles3D
+        {
+            Amount = 56,
+            Lifetime = 0.9f,
+            OneShot = true,
+            Explosiveness = 0.92f,
+            ProcessMaterial = material,
+            DrawPass1 = mesh,
+            Position = from
+        };
+        AddChild(particles);
+        particles.Emitting = true;
+
+        var flash = new OmniLight3D
+        {
+            LightColor = new Color(1.0f, 0.62f, 0.28f),
+            LightEnergy = 3.2f,
+            OmniRange = 6.0f,
+            Position = from + new Vector3(0, 0.6f, 0)
+        };
+        AddChild(flash);
+
+        Tween tween = CreateTween();
+        tween.TweenProperty(flash, "light_energy", 0.0, 0.45);
+        tween.TweenCallback(Callable.From(() =>
+        {
+            flash.QueueFree();
+            particles.QueueFree();
+        }));
     }
 
     public string GetSummary()

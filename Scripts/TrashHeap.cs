@@ -55,6 +55,44 @@ public partial class TrashHeap : Node3D
         {
             SpawnDebris(rng);
         }
+
+        SpawnDustBurst();
+    }
+
+    /// <summary>Пылевой взрыв из-под лопаты (2.0/Модуль 3): коричнево и честно воняет.</summary>
+    private void SpawnDustBurst()
+    {
+        var material = new ParticleProcessMaterial
+        {
+            Direction = new Vector3(0, 1, 0),
+            Spread = 40f,
+            InitialVelocityMin = 1.2f,
+            InitialVelocityMax = 2.6f,
+            Gravity = new Vector3(0, -1.6f, 0),
+            ScaleMin = 0.10f,
+            ScaleMax = 0.22f,
+            Color = new Color(0.55f, 0.46f, 0.34f, 0.8f)
+        };
+
+        var mesh = new BoxMesh { Size = new Vector3(0.14f, 0.10f, 0.14f) };
+        mesh.Material = PixelTextureFactory.Flat(new Color(0.55f, 0.46f, 0.34f, 0.8f));
+
+        var particles = new GPUParticles3D
+        {
+            Amount = 18,
+            Lifetime = 0.65f,
+            OneShot = true,
+            Explosiveness = 0.85f,
+            ProcessMaterial = material,
+            DrawPass1 = mesh,
+            Position = new Vector3(0, 0.7f, 0)
+        };
+        AddChild(particles);
+        particles.Emitting = true;
+
+        Tween tween = CreateTween();
+        tween.TweenInterval(1.0f);
+        tween.TweenCallback(Callable.From(() => particles.QueueFree()));
     }
 
     private void SpawnDebris(Random rng)

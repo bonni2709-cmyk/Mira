@@ -12,6 +12,7 @@ public partial class SoundSystem : Node
     private readonly Random _rng = new();
     private AudioStreamPlayer[] _players = Array.Empty<AudioStreamPlayer>();
     private AudioStreamPlayer _fanPlayer = null!;
+    private AudioStreamPlayer _blowPlayer = null!;
     private int _nextPlayer;
 
     private const int MixRate = 22050;
@@ -27,6 +28,8 @@ public partial class SoundSystem : Node
 
         _fanPlayer = new AudioStreamPlayer { Bus = "Master", VolumeDb = -16.0f };
         AddChild(_fanPlayer);
+        _blowPlayer = new AudioStreamPlayer { Bus = "Master", VolumeDb = -14.0f };
+        AddChild(_blowPlayer);
     }
 
     public void PlayDig() => Play(MakeStream(SynthNoiseSweep(0.22f, 0.35f, decay: 5f)), -10f);
@@ -36,6 +39,35 @@ public partial class SoundSystem : Node
     public void PlayExplosion() => Play(MakeStream(SynthExplosion()), -2f);
     public void PlayCash() => Play(MakeStream(SynthCash()), -8f);
     public void PlayFail() => Play(MakeStream(SynthSweep(300f, 60f, 0.5f)), -10f);
+
+    /// <summary>Вскрытие коробки: хруст картона и рвущийся скотч.</summary>
+    public void PlayBoxOpen() => Play(MakeStream(SynthBoxOpen()), -7f);
+
+    /// <summary>Короткий скрип-стук жёсткого диска, который очень старается.</summary>
+    public void PlayHddScratch() => Play(MakeStream(SynthHddScratch()), -13f);
+
+    /// <summary>Продувка: шипение сжатого воздуха, пока игрок дует или держит кнопку.</summary>
+    public void SetBlowing(bool on)
+    {
+        if (on)
+        {
+            if (!_blowPlayer.Playing)
+            {
+                _blowPlayer.Stream = MakeStream(SynthBlowLoop(), loop: true);
+                _blowPlayer.Play();
+            }
+        }
+        else if (_blowPlayer.Playing)
+        {
+            _blowPlayer.Stop();
+        }
+    }
+
+    /// <summary>Гул вентилятора растёт с температурой: выше градус — истеричнее вой.</summary>
+    public void SetFanPitch(float celsius)
+    {
+        _fanPlayer.PitchScale = Mathf.Clamp(0.9f + (celsius - 34f) / 220f, 0.9f, 1.35f);
+    }
 
     public void SetFan(bool on)
     {
@@ -174,6 +206,57 @@ public partial class SoundSystem : Node
             float freq = t < 0.16f ? 880f : 1320f;
             float env = Mathf.Exp(-Mathf.Max(0f, t - (t < 0.16f ? 0f : 0.16f)) * 9f);
             samples[i] = Mathf.Sign(Mathf.Sin(Mathf.Tau * freq * t)) * env * 0.22f;
+        }
+
+        return samples;
+    }
+
+    private float[] SynthBoxOpen()
+    {
+        int count = (int)(MixRate * 0.5f);
+        var samples = new float[count];
+        float last = 0f;
+        for (int i = 0; i < count; i++)
+        {
+            float t = i / (float)count;
+            float noise = (float)(_rng.NextDouble() * 2.0 - 1.0);
+            last = last * 0.55f + noise * 0.45f;
+            // Два рывка скотча: в начале и на трети.
+            float burst = (t < 0.25f || (t > 0.38f && t < 0.55f)) ? 1.0f : 0.35f;
+            float env = Mathf.Sin(Mathf.Min(1f, t * 1.15f) * Mathf.Pi);
+            samples[i] = last * env * burst * 0.8f;
+        }
+
+        return samples;
+    }
+
+    private float[] SynthHddScratch()
+    {
+        int count = (int)(MixRate * 0.16f);
+        var samples = new float[count];
+        float phase = 0f;
+        for (int i = 0; i < count; i++)
+        {
+            float t = i / (float)count;
+            float freq = 1900f + Mathf.Sin(t * 55f) * 700f;
+            phase += freq / MixRate;
+            float click = t > 0.55f && t < 0.62f ? 0.7f : 0.0f;
+            samples[i] = (Mathf.Sin(Mathf.Tau * phase) * 0.18f + click * (float)(_rng.NextDouble() * 2 - 1)) * (1f - t);
+        }
+
+        return samples;
+    }
+
+    private float[] SynthBlowLoop()
+    {
+        int count = MixRate;
+        var samples = new float[count];
+        float last = 0f;
+        for (int i = 0; i < count; i++)
+        {
+            float noise = (float)(_rng.NextDouble() * 2.0 - 1.0);
+            last = last * 0.35f + noise * 0.65f;
+            samples[i] = last * 0.55f;
         }
 
         return samples;

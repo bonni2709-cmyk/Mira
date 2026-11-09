@@ -42,6 +42,7 @@ public partial class Main : Node3D
     private bool _deliveryInProgress;
     private bool _gameStarted;
     private bool _blowHeld;
+    private float _hddScratchTimer;
 
     private Vector2 _pressPosition;
     private bool _pointerDown;
@@ -186,6 +187,7 @@ public partial class Main : Node3D
         {
             _ui.SetTemperature(celsius, left, running);
             _ui.SetTestOverlay(celsius, left, running, _heat.RedZoneSeconds, _heat.InChallenge);
+            _sound.SetFanPitch(celsius);
         };
         _heat.CriticalTemperature += celsius =>
         {
@@ -247,9 +249,20 @@ public partial class Main : Node3D
 
         bool blowing = _sensors.IsBlowing || _blowHeld;
         _heat.SetExternalCooling(blowing);
+        _sound.SetBlowing(blowing && _gameStarted && _build.Installed.Count > 0);
         if (blowing && _gameStarted)
         {
             _build.ApplyBlow(delta);
+        }
+
+        if (_heat.IsRunning && _build.HasHdd)
+        {
+            _hddScratchTimer -= (float)delta;
+            if (_hddScratchTimer <= 0f)
+            {
+                _hddScratchTimer = 1.2f + (float)_rng.NextDouble() * 1.4f;
+                _sound.PlayHddScratch();
+            }
         }
 
         if (_ui.IsBuildPanelOpen)
@@ -443,6 +456,7 @@ public partial class Main : Node3D
         {
             _sound.PlayExplosion();
             _sound.PlayFail();
+            _cameraRig.AddShake(0.6f);
             PcPart? burned = _build.BurnRandomPart();
             _state.AddReputation(-10);
             _client.Leave(false);
@@ -459,6 +473,7 @@ public partial class Main : Node3D
             if (!survived)
             {
                 _sound.PlayExplosion();
+                _cameraRig.AddShake(0.6f);
             }
 
             _ui.SetMessage(summary);
@@ -802,6 +817,8 @@ public partial class Main : Node3D
             return;
         }
 
+        _sound.PlayBoxOpen();
+
         _pendingAliPart = null;
         _state.AddPart(part);
         _ui.SetOpenEnabled(false);
@@ -845,6 +862,12 @@ public partial class Main : Node3D
     private void OnHammerPressed()
     {
         _ui.SetMessage(_build.HammerSelected());
+        if (_build.LastHammerLanded)
+        {
+            _sound.PlayHammer();
+            _cameraRig.AddShake(0.14f);
+        }
+
         RefreshBuildUi();
     }
 

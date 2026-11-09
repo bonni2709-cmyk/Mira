@@ -212,7 +212,7 @@ public partial class MayoMinigame : Control
             Position = new Vector2(24, 18)
         };
         _statusLabel.AddThemeFontSizeOverride("font_size", 24);
-        _statusLabel.AddThemeColorOverride("font_color", new Color(0.95f, 0.92f, 0.80f));
+        _statusLabel.AddThemeColorOverride("font_color", new Color(0.98f, 0.99f, 1.0f));
         AddChild(_statusLabel);
 
         _coverageBar = new ProgressBar
@@ -226,7 +226,8 @@ public partial class MayoMinigame : Control
         };
         AddChild(_coverageBar);
 
-        var done = new Button { Text = "Готово, ставь кулер", Size = new Vector2(280, 56) };
+        var done = MakeGlassButton("Готово, ставь кулер");
+        done.Size = new Vector2(280, 56);
         done.SetAnchorsPreset(LayoutPreset.BottomLeft);
         done.Position = new Vector2(24, -80);
         done.AddThemeFontSizeOverride("font_size", 22);
@@ -239,7 +240,8 @@ public partial class MayoMinigame : Control
         };
         AddChild(done);
 
-        var cancel = new Button { Text = "Отмена", Size = new Vector2(180, 56) };
+        var cancel = MakeGlassButton("Отмена");
+        cancel.Size = new Vector2(180, 56);
         cancel.SetAnchorsPreset(LayoutPreset.BottomLeft);
         cancel.Position = new Vector2(324, -80);
         cancel.AddThemeFontSizeOverride("font_size", 22);
@@ -249,5 +251,27 @@ public partial class MayoMinigame : Control
             Cancelled?.Invoke();
         };
         AddChild(cancel);
+    }
+
+    /// <summary>Стеклянная кнопка под glassmorphism-стиль (2.0/Модуль 3).</summary>
+    private static Button MakeGlassButton(string text)
+    {
+        var button = new Button { Text = text };
+        button.AddThemeColorOverride("font_color", new Color(0.97f, 0.98f, 1.0f));
+        button.AddThemeFontSizeOverride("font_size", 22);
+        var normal = new StyleBoxFlat
+        {
+            BgColor = new Color(0.16f, 0.19f, 0.24f, 0.80f),
+            BorderColor = new Color(1f, 1f, 1f, 0.35f),
+            BorderWidthLeft = 1, BorderWidthRight = 1, BorderWidthTop = 1, BorderWidthBottom = 1,
+            CornerRadiusTopLeft = 9, CornerRadiusTopRight = 9, CornerRadiusBottomLeft = 9, CornerRadiusBottomRight = 9,
+            ContentMarginLeft = 14, ContentMarginRight = 14, ContentMarginTop = 8, ContentMarginBottom = 8
+        };
+        var hover = (StyleBoxFlat)normal.Duplicate();
+        hover.BgColor = new Color(0.28f, 0.33f, 0.40f, 0.88f);
+        button.AddThemeStyleboxOverride("normal", normal);
+        button.AddThemeStyleboxOverride("hover", hover);
+        button.AddThemeStyleboxOverride("pressed", hover);
+        return button;
     }
 }
