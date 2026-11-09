@@ -70,12 +70,58 @@ public partial class HeatSystem : Node
         }
 
         IsRunning = true;
+        InChallenge = false;
         _criticalAnnounced = false;
         SecondsLeft = TestDurationSeconds;
         Temperature = Mathf.Max(Temperature, AmbientCelsius);
         _build.SetFanSpinning(true);
         EmitTemperature();
         return true;
+    }
+
+    /// <summary>Мини-игра на выживание: Киберпанк должен прожить 60 секунд при клиенте.</summary>
+    public bool StartChallenge(out string error)
+    {
+        error = "";
+        if (_build == null)
+        {
+            error = "Стол сборки не найден. Клиент смотрит на пустой стол. Неудобно вышло.";
+            return false;
+        }
+
+        var missing = _build.GetMissingEssentials();
+        if (missing.Count > 0)
+        {
+            error = $"Клиенту такое не запустишь, не хватает: {string.Join(", ", missing)}.";
+            return false;
+        }
+
+        if (IsRunning)
+        {
+            error = "Уже что-то тестируется. ПК один, а амбиций — на серверную.";
+            return false;
+        }
+
+        IsRunning = true;
+        InChallenge = true;
+        _criticalAnnounced = false;
+        SecondsLeft = ChallengeDurationSeconds;
+        Temperature = Mathf.Max(Temperature, AmbientCelsius);
+        _build.SetFanSpinning(true);
+        EmitTemperature();
+        return true;
+    }
+
+    /// <summary>Аварийное охлаждение: открыли корпус — минус градусы сразу.</summary>
+    public void ApplyInstantCooling(float celsius)
+    {
+        if (!IsRunning)
+        {
+            return;
+        }
+
+        Temperature = Mathf.Max(AmbientCelsius, Temperature - celsius);
+        EmitTemperature();
     }
 
     public void StopTest(string reason)
@@ -86,6 +132,7 @@ public partial class HeatSystem : Node
         }
 
         IsRunning = false;
+        InChallenge = false;
         _build?.SetFanSpinning(false);
         _build?.SetSmoke(false);
         EmitSignal(SignalName.TestFinished, false, reason);
@@ -111,8 +158,8 @@ public partial class HeatSystem : Node
         if (IsRunning && _build != null)
         {
             SecondsLeft -= d;
-            float rate = _build.GetHeatRatePerSecond();
-            float cooling = _coolingActive ? 6.5f : 0f;
+            float rate = _build.GetHeatRatePerSecond() * (InChallenge ? ChallengeLoadMultiplier : 1.0f);
+            float cooling = (_coolingActive ? 6.5f : 0f) + PassiveCoolingPerSecond;
             Temperature += (rate - cooling) * d;
 
             bool hddRumble = _build.Installed.TryGetValue(PartType.Hdd, out BuildController.InstalledPart hdd)
@@ -142,11 +189,15 @@ public partial class HeatSystem : Node
 
             if (Temperature >= FailCelsius)
             {
-                Finish(false, "100°C. Что-то внутри сказало «хватит» и перестало быть деталью. ПК не прошёл тест — но как дымил!");
+                Finish(false, InChallenge
+                    ? "100°C при клиенте. Дым, запах палёного майонеза, тишина. Одна деталь сгорела насовсем."
+                    : "100°C. Что-то внутри сказало «хватит» и перестало быть деталью. ПК не прошёл тест — но как дымил!");
             }
             else if (SecondsLeft <= 0f)
             {
-                Finish(true, $"Тест пройден! ПК пережил {TestDurationSeconds:0} секунд и нагрелся «всего» до {Temperature:0}°C. Клиенту такое можно показывать. Издалека.");
+                Finish(true, InChallenge
+                    ? $"КИБЕРПАНК ПРОЖИЛ 60 СЕКУНД! Пик — {Temperature:0}°C. Клиент в восторге и уже достаёт копилку."
+                    : $"Тест пройден! ПК пережил {TestDurationSeconds:0} секунд и нагрелся «всего» до {Temperature:0}°C. Клиенту такое можно показывать. Издалека.");
             }
 
             EmitTemperature();
@@ -161,6 +212,7 @@ public partial class HeatSystem : Node
     private void Finish(bool survived, string summary)
     {
         IsRunning = false;
+        InChallenge = false;
         _build?.SetFanSpinning(false);
         _build?.SetSmoke(!survived || Temperature >= CriticalCelsius);
         _build?.MarkTestResult(survived);

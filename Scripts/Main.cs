@@ -839,11 +839,11 @@ public partial class Main : Node3D
 
     private void BuildEnvironment()
     {
-        var environment = new Environment
+        var environment = new Godot.Environment
         {
-            BackgroundMode = Environment.BGEnum.Color,
+            BackgroundMode = Godot.Environment.BGEnum.Color,
             BackgroundColor = new Color(0.07f, 0.06f, 0.05f),
-            AmbientLightSource = Environment.AmbientSourceEnum.Color,
+            AmbientLightSource = Godot.Environment.AmbientSourceEnum.Color,
             AmbientLightColor = new Color(0.55f, 0.48f, 0.38f),
             AmbientLightEnergy = 0.55f,
             GlowEnabled = false,
