@@ -20,6 +20,7 @@ jobs:
   export-android:
     name: Export Android APK (Godot 4.3, C#)
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     container:
       image: barichello/godot-ci:mono-4.3
     steps:
@@ -194,8 +195,18 @@ jobs:
       - name: Install Android build template (Gradle)
         run: |
           cd "$PROJECT_PATH"
-          godot --headless --install-android-build-template
-          ls android/build || ls android
+          TEMPLATES="$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable.mono"
+          ls "$TEMPLATES" || true
+          mkdir -p android
+          cd android
+          "$HOME/jdk/bin/jar" xf "$TEMPLATES/android_source.zip"
+          cd ..
+          {
+            echo "=== android tree ==="
+            find android -maxdepth 2 | head -n 40
+          } > "$GITHUB_WORKSPACE/android-template.txt" 2>&1 || true
+          msg="$(sed 's/%/%25/g; s/\r/%0D/g' "$GITHUB_WORKSPACE/android-template.txt" | awk '{printf "%s%%0A", $0}')"
+          echo "::error file=androidtemplate.txt,title=androidtemplate::$msg"
 
       - name: Export Android APK (debug)
         run: |
