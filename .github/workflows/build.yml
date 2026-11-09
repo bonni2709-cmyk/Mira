@@ -39,6 +39,14 @@ jobs:
           java -version || true
           echo "ANDROID_HOME=${ANDROID_HOME:-unset} ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT:-unset}"
 
+      - name: Install .NET 8 SDK (container image has none)
+        run: |
+          curl -sSL https://dot.net/v1/dotnet-install.sh -o /tmp/dotnet-install.sh             || wget -q https://dot.net/v1/dotnet-install.sh -O /tmp/dotnet-install.sh
+          bash /tmp/dotnet-install.sh --channel 8.0 --install-dir "$HOME/.dotnet"
+          echo "$HOME/.dotnet" >> "$GITHUB_PATH"
+          echo "DOTNET_ROOT=$HOME/.dotnet" >> "$GITHUB_ENV"
+          "$HOME/.dotnet/dotnet" --version
+
       - name: Fix .NET root for Godot (hostfxr)
         run: |
           echo "dotnet: $(which dotnet || echo missing) -> $(readlink -f "$(which dotnet)" 2>/dev/null || echo '?')"
@@ -96,7 +104,7 @@ jobs:
             godot --headless --verbose --import 2>&1
             echo "IMPORT_EXIT=$?"
           } | tee "$GITHUB_WORKSPACE/ci-import.log"
-          test -f .godot/global_script_class_cache.cfg || test -d .godot
+          grep -q "IMPORT_EXIT=0" "$GITHUB_WORKSPACE/ci-import.log"
 
       - name: Upload CI logs
         if: always()
