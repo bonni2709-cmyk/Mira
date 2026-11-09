@@ -1,9 +1,10 @@
-[gd_scene load_steps=12 format=3 uid="uid://trashpcmain001"]
+[gd_scene load_steps=11 format=3 uid="uid://trashpcmain001"]
 
 [ext_resource type="Script" path="res://Scripts/Main.cs" id="1_main"]
 [ext_resource type="Script" path="res://Scripts/IsoCameraRig.cs" id="2_cam"]
 [ext_resource type="Script" path="res://Scripts/GarageBuilder.cs" id="3_garage"]
-[ext_resource type="Script" path="res://Scripts/TrashHeap.cs" id="4_heap"]
+[ext_resource type="Script" path="res://Scripts/ClientController.cs" id="10_client"]
+[ext_resource type="Script" path="res://Scripts/SoundSystem.cs" id="11_sound"]
 [ext_resource type="Script" path="res://Scripts/DeliveryBox.cs" id="5_box"]
 [ext_resource type="Script" path="res://Scripts/UI/MainUI.cs" id="6_ui"]
 [ext_resource type="Script" path="res://Scripts/BuildController.cs" id="7_build"]
@@ -23,10 +24,6 @@ size = 13.0
 [node name="Garage" type="Node3D" parent="."]
 script = ExtResource("3_garage")
 
-[node name="TrashHeap" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.2, 0, 2.6)
-script = ExtResource("4_heap")
-
 [node name="DeliveryBox" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.6, 1.11, -3.7)
 script = ExtResource("5_box")
@@ -40,6 +37,12 @@ script = ExtResource("8_heat")
 
 [node name="AndroidSensors" type="Node" parent="."]
 script = ExtResource("9_sensors")
+
+[node name="Client" type="Node3D" parent="."]
+script = ExtResource("10_client")
+
+[node name="SoundSystem" type="Node" parent="."]
+script = ExtResource("11_sound")
 
 [node name="UI" type="CanvasLayer" parent="."]
 script = ExtResource("6_ui")

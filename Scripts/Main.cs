@@ -17,7 +17,6 @@ public partial class Main : Node3D
     private GameState _state = null!;
     private MainUI _ui = null!;
     private IsoCameraRig _cameraRig = null!;
-    private TrashHeap _heap = null!;
     private DeliveryBox _deliveryBox = null!;
     private BuildController _build = null!;
     private HeatSystem _heat = null!;
@@ -58,7 +57,6 @@ public partial class Main : Node3D
         _state = GetNode<GameState>("/root/GameState");
         _ui = GetNode<MainUI>("UI");
         _cameraRig = GetNode<IsoCameraRig>("CameraRig");
-        _heap = GetNode<TrashHeap>("TrashHeap");
         _deliveryBox = GetNode<DeliveryBox>("DeliveryBox");
         _build = GetNode<BuildController>("BuildController");
         _heat = GetNode<HeatSystem>("HeatSystem");
@@ -71,7 +69,8 @@ public partial class Main : Node3D
 
         _ui.Bind(_state);
         _ui.PlayPressed += OnPlayPressed;
-        _ui.DigPressed += DigAtHeap;
+        // 3.0/Модуль 1: гаража-кучи больше нет — кнопка везёт на отдельную локацию «Свалка».
+        _ui.DigPressed += OnGoToDump;
         _ui.BuyBoxPressed += OnBuyBoxPressed;
         _ui.OpenBoxPressed += OpenDeliveryBox;
         _ui.SellPartPressed += OnSellPartPressed;
@@ -678,7 +677,7 @@ public partial class Main : Node3D
             case 1:
                 _blackoutTimer = 15f;
                 _garage.SetBlackout(true);
-                _ui.SetMessage("Событие: ОТКЛЮЧИЛИ СВЕТ на 15 секунд. Лампочка в отпуске. Копай на ощупь, как предки.");
+                _ui.SetMessage("Событие: ОТКЛЮЧИЛИ СВЕТ на 15 секунд. Лампочка в отпуске. Собирай на ощупь, как предки.");
                 break;
             case 2:
                 _catTimer = 20f;
@@ -711,51 +710,7 @@ public partial class Main : Node3D
         _sensors.StartMicrophone();
         _ui.ShowGame();
         _ui.SetSensorStatus(_sensors.Status);
-        _ui.SetMessage("Тапай по куче мусора справа — там твой стартовый капитал. Буквально.");
-    }
-
-    private void DigAtHeap()
-    {
-        if (!_gameStarted)
-        {
-            return;
-        }
-
-        if (_state.InventoryFull)
-        {
-            _ui.SetMessage($"Инвентарь полон ({_state.Inventory.Count}/{_state.InventoryCapacity})! Сдай лишнее барахольщику, поставь детали на стол или купи ящик «Кладовка» (+5 слотов).");
-            return;
-        }
-
-        _heap.PlayDigEffect(_rng);
-        int roll = _rng.Next(100);
-
-        if (roll < 5)
-        {
-            PcPart epic = PartCatalog.CreateEpicFind(_rng);
-            _state.AddPart(epic);
-            ShowFoundPart(epic, _heap.GlobalPosition + new Vector3(0, 1.4f, 0));
-            _sound.PlayCash();
-            _state.AddReputation(1);
-            _ui.SetMessage($"ЛЕГЕНДАРНАЯ НАХОДКА: {epic.Name}! {epic.Description} Репутация гаража +1: о тебе начинают говорить.");
-            SaveGame();
-        }
-        else if (roll < 58)
-        {
-            PcPart part = PartCatalog.CreateDumpFind(_rng);
-            _state.AddPart(part);
-            ShowFoundPart(part, _heap.GlobalPosition + new Vector3(0, 1.1f, 0));
-            _ui.SetMessage($"Выкопал: {part.Name}. {part.Description}");
-        }
-        else if (roll < 80)
-        {
-            _state.AddMoney(PartCatalog.ScrapRewardRub);
-            _ui.SetMessage($"{PartCatalog.RandomScrapLine(_rng)} +{PartCatalog.ScrapRewardRub} ₽");
-        }
-        else
-        {
-            _ui.SetMessage(PartCatalog.RandomNothingLine(_rng));
-        }
+        _ui.SetMessage("Жми «КОПАТЬ НА СВАЛКЕ» справа внизу — уезжаем за стартовым капиталом. Буквально.");
     }
 
     private void OnBuyBoxPressed()
@@ -969,19 +924,6 @@ public partial class Main : Node3D
         _ui.SetPasteState(_build.CpuPaste01, false);
     }
 
-    private void ShowFoundPart(PcPart part, Vector3 position)
-    {
-        Node3D visual = PartVisualFactory.Create(part);
-        visual.Position = position;
-        visual.Scale = Vector3.One * 0.9f;
-        AddChild(visual);
-
-        Tween tween = CreateTween();
-        tween.TweenProperty(visual, "position", position + new Vector3(0, 0.85f, 0), 0.5)
-            .SetTrans(Tween.TransitionType.Back).SetEase(Tween.EaseType.Out);
-        tween.TweenInterval(1.6);
-        tween.TweenCallback(Callable.From(() => visual.QueueFree()));
-    }
 
     // ---------- Указатель: три режима ----------
 
@@ -1082,11 +1024,7 @@ public partial class Main : Node3D
             return;
         }
 
-        if (collider.IsInGroup(TrashHeap.GroupName))
-        {
-            DigAtHeap();
-        }
-        else if (collider.IsInGroup(DeliveryBox.GroupName))
+        if (collider.IsInGroup(DeliveryBox.GroupName))
         {
             OpenDeliveryBox();
         }

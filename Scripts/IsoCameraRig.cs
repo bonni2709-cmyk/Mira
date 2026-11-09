@@ -24,7 +24,14 @@ public partial class IsoCameraRig : Node3D
 
     public override void _Ready()
     {
-        _camera = GetNode<Camera3D>("Camera3D");
+        // 3.0/Модуль 1: камеры может не быть в сцене (так свалка уходила в чёрный экран) —
+        // создаём сами, чтобы ни одна локация больше не зависела от ручной сцены.
+        _camera = GetNodeOrNull<Camera3D>("Camera3D") ?? new Camera3D { Name = "Camera3D" };
+        if (_camera.GetParent() == null)
+        {
+            AddChild(_camera);
+        }
+
         _camera.Projection = Camera3D.ProjectionType.Orthogonal;
         _camera.Size = 13.0f;
         _camera.Near = 0.05f;

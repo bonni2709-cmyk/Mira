@@ -458,9 +458,17 @@ public partial class MainUI : CanvasLayer
         topBar.AddThemeStyleboxOverride("panel", MakePanelStyle());
         _hud.AddChild(topBar);
 
+        // 3.0/Модуль 1: кнопок стало много — верхнее меню теперь горизонтально прокручивается свайпом.
+        var topScroll = new ScrollContainer
+        {
+            HorizontalScrollMode = ScrollContainer.ScrollModeEnum.ShowNever,
+            VerticalScrollMode = ScrollContainer.ScrollModeEnum.Disabled
+        };
+        topBar.AddChild(topScroll);
+
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", 14);
-        topBar.AddChild(row);
+        topScroll.AddChild(row);
 
         _moneyLabel = MakeLabel("Деньги: 0 ₽", 26);
         row.AddChild(_moneyLabel);

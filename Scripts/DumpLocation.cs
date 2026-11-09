@@ -40,7 +40,8 @@ public partial class DumpLocation : Node3D
 
     public override void _Ready()
     {
-        BuildEnvironment();
+        // 3.0/Модуль 1: WorldEnvironment, солнце и пол живут прямо в Dump.tscn —
+        // сцена видна даже если код декора проснётся позже. Код добавляет только горы, лужи, машину и собак.
         BuildGroundAndMountains();
         BuildDogs();
 
@@ -323,10 +324,6 @@ public partial class DumpLocation : Node3D
 
     private void BuildGroundAndMountains()
     {
-        var ground = PartVisualFactory.Box("MudGround", new Vector3(0, -0.16f, 0), new Vector3(26f, 0.3f, 20f),
-            PixelTextureFactory.Flat(new Color(0.32f, 0.26f, 0.19f)));
-        AddChild(ground);
-
         for (int i = 0; i < 6; i++)
         {
             float x = -9f + i * 3.6f;
@@ -357,14 +354,6 @@ public partial class DumpLocation : Node3D
         AddChild(PartVisualFactory.Cylinder("DeadCarWheel2", new Vector3(-6.6f, 0.35f, -3.7f), 0.35f, 0.2f,
             PixelTextureFactory.Flat(new Color(0.10f, 0.10f, 0.10f))));
 
-        var sun = new DirectionalLight3D
-        {
-            RotationDegrees = new Vector3(-50f, -30f, 0),
-            LightColor = new Color(0.85f, 0.78f, 0.66f),
-            LightEnergy = 0.8f,
-            ShadowEnabled = false
-        };
-        AddChild(sun);
 
         var sign = new Label3D
         {
@@ -380,18 +369,4 @@ public partial class DumpLocation : Node3D
         AddChild(sign);
     }
 
-    private void BuildEnvironment()
-    {
-        var environment = new Godot.Environment
-        {
-            BackgroundColor = new Color(0.45f, 0.40f, 0.33f),
-            AmbientLightColor = new Color(0.60f, 0.55f, 0.45f),
-            AmbientLightEnergy = 0.7f,
-            GlowEnabled = false,
-            FogEnabled = false
-        };
-        environment.Set("background_mode", 1);
-        environment.Set("ambient_light_source", 2);
-        AddChild(new WorldEnvironment { Environment = environment });
-    }
 }
