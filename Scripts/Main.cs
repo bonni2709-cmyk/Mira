@@ -24,6 +24,12 @@ public partial class Main : Node3D
     private AndroidSensors _sensors = null!;
     private ClientController _client = null!;
     private SoundSystem _sound = null!;
+    private GarageBuilder _garage = null!;
+    private float _challengePeak;
+    private float _eventTimer = 45f;
+    private float _blackoutTimer;
+    private float _catTimer;
+    private bool _fleaBonus;
 
     private enum ClientStage { None, Intro, Request, WaitingBuild, ChallengePassed }
     private ClientStage _clientStage = ClientStage.None;
@@ -59,6 +65,7 @@ public partial class Main : Node3D
         _sensors = GetNode<AndroidSensors>("AndroidSensors");
         _client = GetNode<ClientController>("Client");
         _sound = GetNode<SoundSystem>("SoundSystem");
+        _garage = GetNode<GarageBuilder>("Garage");
 
         _heat.Bind(_build);
 
@@ -97,7 +104,7 @@ public partial class Main : Node3D
             if (_clientStage == ClientStage.Intro)
             {
                 _clientStage = ClientStage.Request;
-                _client.Say("Киберпанк. Ультра. Ну пожалуйста.");
+                _client.Say(_clientData != null ? $"{_clientData.GameTitle}. Ну пожалуйста." : "Запусти игру. Ну пожалуйста.");
                 UpdateClientUi();
             }
         };
@@ -126,9 +133,11 @@ public partial class Main : Node3D
             _clientData = null;
             _clientStage = ClientStage.None;
             _nextClientTimer = 25f;
-            _ui.SetMessage("Клиент ушёл мечтать дальше. Следующий найдётся — гараж пахнет возможностями.");
+            _state.AddReputation(-2);
+            _ui.SetMessage("Клиент ушёл мечтать дальше. Репутация -2: сарафанное радио всё слышит.");
             UpdateClientUi();
         };
+        _ui.BuyGaragePressed += OnBuyGaragePressed;
         _ui.OpenCasePressed += () =>
         {
             if (!_heat.IsRunning)
@@ -178,6 +187,35 @@ public partial class Main : Node3D
 
     public override void _Process(double delta)
     {
+        if (_gameStarted)
+        {
+            _eventTimer -= (float)delta;
+            if (_eventTimer <= 0f)
+            {
+                _eventTimer = 50f + (float)_rng.NextDouble() * 35f;
+                RollRandomEvent();
+            }
+
+            if (_blackoutTimer > 0f)
+            {
+                _blackoutTimer -= (float)delta;
+                if (_blackoutTimer <= 0f)
+                {
+                    _garage.SetBlackout(false);
+                    _ui.SetMessage("Свет дали. Лампочка мигнула и сделала вид, что так и было.");
+                }
+            }
+
+            if (_catTimer > 0f)
+            {
+                _catTimer -= (float)delta;
+                if (_catTimer <= 0f)
+                {
+                    _garage.SetCatVisible(false);
+                }
+            }
+        }
+
         bool blowing = _sensors.IsBlowing || _blowHeld;
         _heat.SetExternalCooling(blowing);
         if (blowing && _gameStarted)
@@ -250,18 +288,22 @@ public partial class Main : Node3D
             return;
         }
 
-        _clientData = ClientCatalog.CreateRandom(_rng);
+        float budgetMult = GarageCatalog.ClientBudgetMultiplier(_state.GarageLevel);
+        _clientData = ClientCatalog.CreateRandom(_rng, _state.GarageLevel, budgetMult);
         _clientStage = ClientStage.Intro;
         _nextClientTimer = -1f;
         _client.Arrive(_clientData);
         _sound.PlayCreak();
-        _ui.SetMessage($"В гараж зашёл клиент: {_clientData.Name}. Открой панель «Клиент» — у него мечта и копилка.");
+        _ui.SetMessage($"В гараж зашёл клиент: {_clientData.Name} ({_clientData.Archetype}). Открой панель «Клиент» — у него мечта и копилка.");
         UpdateClientUi();
     }
 
     private int ComputeSalePriceRub()
     {
-        return (int)(_build.GetTotalValueRub() * 1.6f) + 250;
+        float repBonus = 1.0f + (_state.Reputation / 25) * 0.05f;
+        float raw = (_build.GetTotalValueRub() * 1.6f + 250f)
+            * GarageCatalog.SalePriceMultiplier(_state.GarageLevel) * repBonus;
+        return (int)raw;
     }
 
     private void UpdateClientUi()
@@ -282,7 +324,7 @@ public partial class Main : Node3D
                 break;
 
             case ClientStage.Request when _clientData != null:
-                _ui.SetClientDialogue(_clientData.Name, ClientCatalog.RequestLine,
+                _ui.SetClientDialogue(_clientData.Name, _clientData.RequestLine,
                     $"Бюджет: {_clientData.BudgetRub} ₽. {stats}",
                     false, true, false, false, true);
                 break;
@@ -336,6 +378,7 @@ public partial class Main : Node3D
 
         if (wasChallenge && survived && _clientData != null)
         {
+            _challengePeak = _heat.PeakTemperature;
             _clientStage = ClientStage.ChallengePassed;
             _client.Say("ШЕСТЬДЕСЯТ СЕКУНД! ОНО ЖИВО!");
             _sound.PlayCash();
@@ -346,13 +389,14 @@ public partial class Main : Node3D
             _sound.PlayExplosion();
             _sound.PlayFail();
             PcPart? burned = _build.BurnRandomPart();
+            _state.AddReputation(-10);
             _client.Leave(false);
             _clientData = null;
             _clientStage = ClientStage.None;
             _nextClientTimer = 30f;
             _ui.SetMessage(summary + (burned != null
-                ? $" Сгорела деталь: «{burned.Name}». Клиент ушёл к другому дяде. Быстро ушёл."
-                : " Клиент ушёл к другому дяде."));
+                ? $" Сгорела деталь: «{burned.Name}». Клиент ушёл к другому дяде. Репутация -10."
+                : " Клиент ушёл к другому дяде. Репутация -10."));
             SaveGame();
         }
         else
@@ -383,6 +427,26 @@ public partial class Main : Node3D
         string note = price <= _clientData.BudgetRub
             ? $"Клиент заплатил {paid} ₽, как договаривались. Даже сдачу не пересчитывал."
             : $"Цена {price} ₽ оказалась выше копилки, клиент отдал всё: {paid} ₽ (с мелочью из карманов).";
+
+        int repDelta;
+        if (_clientData.MaxTempCelsius.HasValue && _challengePeak > _clientData.MaxTempCelsius.Value)
+        {
+            paid = (int)(paid * 0.7f);
+            repDelta = 2;
+            note += $" Но пик был {_challengePeak:0}°C при лимите {_clientData.MaxTempCelsius.Value:0}°C — шумно вышло, поэтому -30% и репутация всего +2.";
+        }
+        else if (_challengePeak <= 75f)
+        {
+            repDelta = 9;
+            note += $" Пик всего {_challengePeak:0}°C — тихо и холодно, клиент в восторге. Репутация +9!";
+        }
+        else
+        {
+            repDelta = 6;
+            note += " Репутация +6.";
+        }
+
+        _state.AddReputation(repDelta);
 
         _state.AddMoney(paid);
         _state.RegisterSale();
@@ -457,14 +521,74 @@ public partial class Main : Node3D
             inventory.Add(SaveSystem.FromDto(dto));
         }
 
-        _state.Restore(data.Money, inventory, data.Tools, data.ComputersSold, data.TotalEarnedRub);
+        _state.Restore(data.Money, inventory, data.Tools, data.ComputersSold, data.TotalEarnedRub, data.Reputation, data.GarageLevel);
         foreach (SaveSystem.InstalledDto installed in data.Installed)
         {
             _build.RestoreInstalled(SaveSystem.FromDto(installed.Part), installed.NeedsHammer,
                 installed.Hammered, installed.HammerHits, installed.Dust01, installed.Paste01);
         }
 
+        _garage.ApplyLevel(_state.GarageLevel);
         GD.Print("Trash-PC Tycoon: сейв загружен.");
+    }
+
+    private void OnBuyGaragePressed(int targetLevel)
+    {
+        GarageCatalog.LevelDef? next = GarageCatalog.Next(_state.GarageLevel);
+        if (next == null || next.Level != targetLevel)
+        {
+            return;
+        }
+
+        if (!_state.BuyGarageUpgrade(targetLevel, next.PriceRub))
+        {
+            _ui.SetMessage($"На «{next.Name}» не хватает ({next.PriceRub} ₽). Продавай ПК, а не мечты. Точнее — и то, и другое.");
+            return;
+        }
+
+        _garage.ApplyLevel(_state.GarageLevel);
+        _sound.PlayCash();
+        _ui.SetMessage($"ГАРАЖ УЛУЧШЕН: {next.Name}! {next.Description}");
+        SaveGame();
+    }
+
+    private void RollRandomEvent()
+    {
+        switch (_rng.Next(6))
+        {
+            case 0:
+                PcPart gift = PartCatalog.CreateDumpFind(_rng);
+                _state.AddPart(gift);
+                _sound.PlayPop();
+                _ui.SetMessage($"Событие: зашёл дядя Витя, оставил «{gift.Name}» со словами «мне уже без надобности». Лежит в инвентаре.");
+                SaveGame();
+                break;
+            case 1:
+                _blackoutTimer = 15f;
+                _garage.SetBlackout(true);
+                _ui.SetMessage("Событие: ОТКЛЮЧИЛИ СВЕТ на 15 секунд. Лампочка в отпуске. Копай на ощупь, как предки.");
+                break;
+            case 2:
+                _catTimer = 20f;
+                _garage.SetCatVisible(true);
+                _build.AddDustToAll(0.15f);
+                _ui.SetMessage("Событие: гаражный кот Барсик лёг спать на тёплый ПК. Уют +100, пыль на деталях +15%.");
+                break;
+            case 3:
+                _fleaBonus = true;
+                _ui.SetMessage("Событие: мимо едет щедрый барахольщик! Следующая сдача детали из инвентаря — за +50%.");
+                break;
+            case 4:
+                _build.AddDustToAll(0.20f);
+                _ui.SetMessage("Событие: крыша протекла прямо на стол сборки. Детали +20% пыли и жизненного опыта.");
+                break;
+            default:
+                int coins = _rng.Next(30, 91);
+                _state.AddMoney(coins);
+                _ui.SetMessage($"Событие: в кармане старых джинсов на свалке нашлось {coins} ₽. Свалка платит тем, кто её любит.");
+                SaveGame();
+                break;
+        }
     }
 
     // ---------- Модуль 1: свалка и магазин ----------
@@ -488,7 +612,17 @@ public partial class Main : Node3D
         _heap.PlayDigEffect(_rng);
         int roll = _rng.Next(100);
 
-        if (roll < 58)
+        if (roll < 5)
+        {
+            PcPart epic = PartCatalog.CreateEpicFind(_rng);
+            _state.AddPart(epic);
+            ShowFoundPart(epic, _heap.GlobalPosition + new Vector3(0, 1.4f, 0));
+            _sound.PlayCash();
+            _state.AddReputation(1);
+            _ui.SetMessage($"ЛЕГЕНДАРНАЯ НАХОДКА: {epic.Name}! {epic.Description} Репутация гаража +1: о тебе начинают говорить.");
+            SaveGame();
+        }
+        else if (roll < 58)
         {
             PcPart part = PartCatalog.CreateDumpFind(_rng);
             _state.AddPart(part);
@@ -572,8 +706,16 @@ public partial class Main : Node3D
             return;
         }
 
-        _state.AddMoney(part.ValueRub);
-        _ui.SetMessage($"Сдал «{part.Name}» барахольщику за {part.ValueRub} ₽. Он даже не спросил, откуда это.");
+        int sellValue = _fleaBonus ? (int)(part.ValueRub * 1.5f) : part.ValueRub;
+        if (_fleaBonus)
+        {
+            _fleaBonus = false;
+        }
+
+        _state.AddMoney(sellValue);
+        _ui.SetMessage(_fleaBonus || sellValue != part.ValueRub
+            ? $"Барахольщик проездом! Сдал «{part.Name}» за {sellValue} ₽ (+50%). Он даже не спросил, откуда это."
+            : $"Сдал «{part.Name}» барахольщику за {sellValue} ₽. Он даже не спросил, откуда это.");
     }
 
     // ---------- Модуль 2: сборка ----------

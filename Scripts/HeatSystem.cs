@@ -26,6 +26,8 @@ public partial class HeatSystem : Node
     private float _vibrateTimer;
 
     public float Temperature { get; private set; } = AmbientCelsius;
+    /// <summary>Пиковая температура текущего запуска (для клиентов «чтобы не шумело»).</summary>
+    public float PeakTemperature { get; private set; } = AmbientCelsius;
     public float SecondsLeft { get; private set; }
     public bool IsRunning { get; private set; }
 
@@ -74,6 +76,7 @@ public partial class HeatSystem : Node
         _criticalAnnounced = false;
         SecondsLeft = TestDurationSeconds;
         Temperature = Mathf.Max(Temperature, AmbientCelsius);
+        PeakTemperature = Temperature;
         _build.SetFanSpinning(true);
         EmitTemperature();
         return true;
@@ -107,6 +110,7 @@ public partial class HeatSystem : Node
         _criticalAnnounced = false;
         SecondsLeft = ChallengeDurationSeconds;
         Temperature = Mathf.Max(Temperature, AmbientCelsius);
+        PeakTemperature = Temperature;
         _build.SetFanSpinning(true);
         EmitTemperature();
         return true;
@@ -161,6 +165,7 @@ public partial class HeatSystem : Node
             float rate = _build.GetHeatRatePerSecond() * (InChallenge ? ChallengeLoadMultiplier : 1.0f);
             float cooling = (_coolingActive ? 6.5f : 0f) + PassiveCoolingPerSecond;
             Temperature += (rate - cooling) * d;
+            PeakTemperature = Mathf.Max(PeakTemperature, Temperature);
 
             bool hddRumble = _build.Installed.TryGetValue(PartType.Hdd, out BuildController.InstalledPart hdd)
                 && hdd.Part.Quality == PartQuality.Trash;

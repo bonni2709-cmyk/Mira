@@ -448,6 +448,16 @@ public partial class BuildController : Node3D
         return Mathf.Max(0.35f, rate);
     }
 
+    /// <summary>События и время добавляют пыли всем деталям сразу (кот, дождь, жизнь).</summary>
+    public void AddDustToAll(float fraction)
+    {
+        foreach (InstalledPart entry in _installed.Values)
+        {
+            entry.Dust01 = Mathf.Clamp(entry.Dust01 + fraction, 0f, 1f);
+            entry.DustVisual.Scale = Vector3.One * Mathf.Max(0.03f, entry.Dust01);
+        }
+    }
+
     public void SetFanSpinning(bool spinning) => _fanSpinning = spinning;
     public void SetSmoke(bool active) => _smokeActive = active;
 

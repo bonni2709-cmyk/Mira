@@ -12,6 +12,8 @@ public partial class GameState : Node
 {
     [Signal] public delegate void MoneyChangedEventHandler(int money);
     [Signal] public delegate void InventoryChangedEventHandler(int itemCount);
+    [Signal] public delegate void ReputationChangedEventHandler(int reputation);
+    [Signal] public delegate void GarageLevelChangedEventHandler(int level);
 
     public const int StartMoneyRub = 500;
 
@@ -20,6 +22,39 @@ public partial class GameState : Node
     public HashSet<string> OwnedTools { get; } = new();
     public int ComputersSold { get; private set; }
     public int TotalEarnedRub { get; private set; }
+
+    // Модуль 4: репутация (0..100) и уровень гаража (1..3).
+    public const int StartReputation = 40;
+    public int Reputation { get; private set; } = StartReputation;
+    public int GarageLevel { get; private set; } = 1;
+
+    /// <summary>Звёздный рейтинг для HUD: 0.0 .. 5.0.</summary>
+    public float StarRating => Reputation / 20.0f;
+
+    public void AddReputation(int delta)
+    {
+        int next = Mathf.Clamp(Reputation + delta, 0, 100);
+        if (next == Reputation)
+        {
+            return;
+        }
+
+        Reputation = next;
+        EmitSignal(SignalName.ReputationChanged, Reputation);
+    }
+
+    public bool BuyGarageUpgrade(int targetLevel, int priceRub)
+    {
+        if (GarageLevel >= targetLevel || !SpendMoney(priceRub))
+        {
+            return false;
+        }
+
+        GarageLevel = targetLevel;
+        EmitSignal(SignalName.GarageLevelChanged, GarageLevel);
+        EmitSignal(SignalName.MoneyChanged, Money);
+        return true;
+    }
 
     public bool CanAfford(int amountRub) => Money >= amountRub;
     public bool OwnsTool(string toolId) => OwnedTools.Contains(toolId);
@@ -89,7 +124,7 @@ public partial class GameState : Node
 
     /// <summary>Восстановление из сейва SaveSystem. Сигналы дёргаем один раз в конце.</summary>
     public void Restore(int money, IEnumerable<PcPart> inventory, IEnumerable<string> tools,
-        int computersSold, int totalEarnedRub)
+        int computersSold, int totalEarnedRub, int reputation, int garageLevel)
     {
         Money = Mathf.Max(0, money);
         Inventory.Clear();
@@ -102,7 +137,11 @@ public partial class GameState : Node
 
         ComputersSold = computersSold;
         TotalEarnedRub = totalEarnedRub;
+        Reputation = Mathf.Clamp(reputation, 0, 100);
+        GarageLevel = Mathf.Clamp(garageLevel, 1, 3);
         EmitSignal(SignalName.MoneyChanged, Money);
         EmitSignal(SignalName.InventoryChanged, Inventory.Count);
+        EmitSignal(SignalName.ReputationChanged, Reputation);
+        EmitSignal(SignalName.GarageLevelChanged, GarageLevel);
     }
 }

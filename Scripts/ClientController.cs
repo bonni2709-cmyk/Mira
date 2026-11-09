@@ -12,6 +12,10 @@ public partial class ClientController : Node3D
     private Node3D _body = null!;
     private MeshInstance3D _hoodie = null!;
     private MeshInstance3D _cap = null!;
+    private MeshInstance3D _capBrim = null!;
+    private MeshInstance3D _beanie = null!;
+    private MeshInstance3D _grayHair = null!;
+    private MeshInstance3D _glasses = null!;
     private Label3D _bubble = null!;
     private float _bobTime;
     private bool _present;
@@ -44,6 +48,12 @@ public partial class ClientController : Node3D
     {
         _hoodie.MaterialOverride = PixelTextureFactory.Flat(client.HoodieColor);
         _cap.MaterialOverride = PixelTextureFactory.Flat(client.CapColor);
+        _beanie.MaterialOverride = PixelTextureFactory.Flat(client.CapColor);
+        _cap.Visible = client.Hat == ClientHat.Cap;
+        _capBrim.Visible = client.Hat == ClientHat.Cap;
+        _beanie.Visible = client.Hat == ClientHat.Beanie;
+        _grayHair.Visible = client.Hat == ClientHat.GrayHair;
+        _glasses.Visible = client.Hat == ClientHat.GrayHair;
         Visible = true;
         _present = true;
         Position = DoorPosition;
@@ -94,8 +104,18 @@ public partial class ClientController : Node3D
             PixelTextureFactory.Flat(new Color(0.14f, 0.15f, 0.17f), 0.4f)));
         _body.AddChild(PartVisualFactory.Box("Head", new Vector3(0, 1.38f, 0), new Vector3(0.44f, 0.42f, 0.42f), skin));
         _body.AddChild(_cap);
-        _body.AddChild(PartVisualFactory.Box("CapBrim", new Vector3(0, 1.52f, 0.30f), new Vector3(0.46f, 0.05f, 0.24f),
-            PixelTextureFactory.Flat(new Color(0.45f, 0.20f, 0.15f))));
+        _capBrim = PartVisualFactory.Box("CapBrim", new Vector3(0, 1.52f, 0.30f), new Vector3(0.46f, 0.05f, 0.24f),
+            PixelTextureFactory.Flat(new Color(0.45f, 0.20f, 0.15f)));
+        _body.AddChild(_capBrim);
+        _beanie = PartVisualFactory.Box("Beanie", new Vector3(0, 1.56f, 0), new Vector3(0.48f, 0.20f, 0.48f),
+            PixelTextureFactory.Flat(new Color(0.30f, 0.30f, 0.34f)));
+        _body.AddChild(_beanie);
+        _grayHair = PartVisualFactory.Box("GrayHair", new Vector3(0, 1.57f, -0.03f), new Vector3(0.47f, 0.16f, 0.47f),
+            PixelTextureFactory.Flat(new Color(0.78f, 0.76f, 0.74f)));
+        _body.AddChild(_grayHair);
+        _glasses = PartVisualFactory.Box("Glasses", new Vector3(0, 1.40f, 0.22f), new Vector3(0.40f, 0.07f, 0.03f),
+            PixelTextureFactory.Flat(new Color(0.12f, 0.12f, 0.13f), 0.4f));
+        _body.AddChild(_glasses);
         _body.AddChild(PartVisualFactory.Box("Backpack", new Vector3(0, 1.00f, -0.30f), new Vector3(0.52f, 0.62f, 0.22f),
             PixelTextureFactory.Flat(new Color(0.55f, 0.45f, 0.20f))));
 

@@ -35,6 +35,24 @@ public static class PartCatalog
             new Color(0.60f, 0.58f, 0.55f), "Одно крепление потеряно, но энтузиазм на месте."),
         new("SSD «1 ТБ» объёмом с флешку", PartType.Ssd, PartQuality.Fake, 85,
             new Color(0.30f, 0.30f, 0.34f), "Внутри тепло и пусто, как в обещаниях продавца."),
+        new("Видеокарта «после майнинга, честно»", PartType.Gpu, PartQuality.Trash, 95,
+            new Color(0.38f, 0.30f, 0.24f), "Три года считала чужие деньги. Теперь будет считать твои кадры."),
+        new("Процессор без одной ножки", PartType.Cpu, PartQuality.Trash, 65,
+            new Color(0.50f, 0.46f, 0.38f), "Ножка была лишней. Наверное. Проверять будем на клиенте."),
+        new("Блок питания от сервера «Ревун»", PartType.Psu, PartQuality.Worn, 110,
+            new Color(0.44f, 0.42f, 0.40f), "Мощный. Громкий. Соседи будут знать, что ты играешь."),
+        new("Корпус с наклейками «скорость +5»", PartType.ComputerCase, PartQuality.Worn, 95,
+            new Color(0.55f, 0.40f, 0.30f), "По легенде гаража, наклейки правда добавляют кадров."),
+    };
+
+    private static readonly Template[] EpicTemplates =
+    {
+        new("Запечатанная GTX 1080 Ti со склада", PartType.Gpu, PartQuality.Working, 650,
+            new Color(0.30f, 0.42f, 0.30f), "Пломбы целы, пыль — только музейная. Легенда свалки существует."),
+        new("Процессор из списанного сервера", PartType.Cpu, PartQuality.Working, 520,
+            new Color(0.42f, 0.44f, 0.48f), "Много ядер, ноль комплексов. Кто-то выбросил золото."),
+        new("Комплект RAM «как из магазина»", PartType.Ram, PartQuality.Working, 430,
+            new Color(0.25f, 0.45f, 0.55f), "Две планки, заводская упаковка, запах нового пластика."),
     };
 
     private static readonly Template[] AliTemplates =
@@ -55,6 +73,10 @@ public static class PartCatalog
             new Color(0.45f, 0.55f, 0.58f), "Трубки есть. Воды нет. Смысла, впрочем, тоже."),
         new("Корпус «Игровой, с дырками»", PartType.ComputerCase, PartQuality.Fake, 140,
             new Color(0.58f, 0.50f, 0.42f), "Дырки для вентиляции просверлены вручную. Криво, но от души."),
+        new("RTX 6090 «предзаказ из будущего»", PartType.Gpu, PartQuality.Fake, 260,
+            new Color(0.60f, 0.48f, 0.30f), "Модель из 2027 года. Внутри, правда, 2015-й."),
+        new("Процессор «128 ядер» по версии коробки", PartType.Cpu, PartQuality.Fake, 210,
+            new Color(0.55f, 0.50f, 0.34f), "128 — это если считать каждую ножку дважды."),
     };
 
     private static readonly string[] NothingLines =
@@ -77,6 +99,13 @@ public static class PartCatalog
         Template t = DumpTemplates[rng.Next(DumpTemplates.Length)];
         int value = t.ValueRub + rng.Next(-15, 21);
         return new PcPart(t.Name, t.Type, t.Quality, Math.Max(10, value), t.Tint, "Свалка", t.Description);
+    }
+
+    public static PcPart CreateEpicFind(Random rng)
+    {
+        Template t = EpicTemplates[rng.Next(EpicTemplates.Length)];
+        int value = t.ValueRub + rng.Next(0, 101);
+        return new PcPart(t.Name, t.Type, t.Quality, value, t.Tint, "Свалка (легенда!)", t.Description);
     }
 
     public static PcPart CreateAliPart(Random rng)

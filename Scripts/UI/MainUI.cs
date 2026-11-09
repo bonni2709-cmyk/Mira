@@ -32,6 +32,7 @@ public partial class MainUI : CanvasLayer
     public event Action? RejectClientPressed;
     public event Action? OpenCasePressed;
     public event Action? SummonClientPressed;
+    public event Action<int>? BuyGaragePressed;
 
     private GameState _state = null!;
 
@@ -51,6 +52,8 @@ public partial class MainUI : CanvasLayer
     private Button _sellPcButton = null!;
     private Button _rejectButton = null!;
     private VBoxContainer _toolsList = null!;
+    private VBoxContainer _garageList = null!;
+    private Label _reputationLabel = null!;
     private Label _moneyLabel = null!;
     private Label _inventoryCountLabel = null!;
     private Label _heatLabel = null!;
@@ -96,8 +99,50 @@ public partial class MainUI : CanvasLayer
         _state = state;
         _state.MoneyChanged += _ => RefreshMoney();
         _state.InventoryChanged += _ => RefreshInventory();
+        _state.ReputationChanged += _ => RefreshReputation();
+        _state.GarageLevelChanged += _ => { RefreshReputation(); RefreshGarageUpgrades(); };
         RefreshMoney();
         RefreshInventory();
+        RefreshReputation();
+    }
+
+    private void RefreshReputation()
+    {
+        _reputationLabel.Text = $"Репутация: {_state.StarRating:0.0}/5 ({_state.Reputation}) • Гараж ур. {_state.GarageLevel}";
+    }
+
+    public void RefreshGarageUpgrades()
+    {
+        foreach (Node child in _garageList.GetChildren())
+        {
+            child.QueueFree();
+        }
+
+        foreach (GarageCatalog.LevelDef def in GarageCatalog.Levels)
+        {
+            bool owned = _state.GarageLevel >= def.Level;
+            bool isNext = _state.GarageLevel + 1 == def.Level;
+            var row = new HBoxContainer();
+            row.AddThemeConstantOverride("separation", 10);
+            Label label = MakeLabel(owned
+                ? $"Уровень {def.Level}: {def.Name} — ТВОЙ\n{def.Description}"
+                : $"Уровень {def.Level}: {def.Name} — {def.PriceRub} ₽\n{def.Description}", 18);
+            label.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+            label.AutowrapMode = TextServer.AutowrapMode.WordSmart;
+            row.AddChild(label);
+
+            if (isNext)
+            {
+                Button buy = MakeButton("Улучшить");
+                buy.Disabled = !_state.CanAfford(def.PriceRub);
+                int level = def.Level;
+                buy.Pressed += () => BuyGaragePressed?.Invoke(level);
+                row.AddChild(buy);
+            }
+
+            _garageList.AddChild(row);
+            _garageList.AddChild(new HSeparator());
+        }
     }
 
     public void ShowGame()
@@ -270,6 +315,8 @@ public partial class MainUI : CanvasLayer
         _moneyLabel.Text = $"Деньги: {_state.Money} ₽";
         _shopMoneyLabel.Text = $"В кассе: {_state.Money} ₽   •   Коробка: {PartCatalog.AliBoxPriceRub} ₽";
         _buyButton.Disabled = !_state.CanAfford(PartCatalog.AliBoxPriceRub);
+        RefreshTools();
+        RefreshGarageUpgrades();
     }
 
     private void RefreshInventory()
@@ -331,6 +378,8 @@ public partial class MainUI : CanvasLayer
         row.AddChild(_inventoryCountLabel);
         _heatLabel = MakeLabel("ПК: 34°C", 26);
         row.AddChild(_heatLabel);
+        _reputationLabel = MakeLabel("Репутация: 2.0/5 (40) • Гараж ур. 1", 22);
+        row.AddChild(_reputationLabel);
 
         var spacer = new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         row.AddChild(spacer);
@@ -457,7 +506,9 @@ public partial class MainUI : CanvasLayer
             "7. «СТАРТ ТЕСТА»: 30 секунд. 88°C — вибрирует и дымит, 100°C — всё, приехали. Дуй, чтобы выжить!\n\n" +
             "КЛИЕНТ И ПРОДАЖА (Модуль 3)\n" +
             "Школьник приходит сам или по кнопке «Клиент». Выслушай его, прими заказ, собери ПК и жми «Запустить Киберпанк»: 60 секунд под нагрузкой при клиенте. Дуй в микрофон, открывай корпус кнопкой в панели сборки (-12°C). Прожил минуту — продавай за цену деталей x1.6 + 250 ₽. Дошёл до 100°C — одна деталь сгорит, клиент уйдёт.\n" +
-            "Заработанное трать в магазине на инструменты: молоток «Убедитель», пылесос, настоящую термопасту и комнатный вентилятор. Кнопка «Сохранить» пишет прогресс, игра и сама сохраняется после важных событий.", 20));
+            "Заработанное трать в магазине на инструменты: молоток «Убедитель», пылесос, настоящую термопасту и комнатный вентилятор. Кнопка «Сохранить» пишет прогресс, игра и сама сохраняется после важных событий.\n\n" +
+            "МОДУЛЬ 4\n" +
+            "Клиенты разные: бабушке важен тихий ПК (пик до 88°C), стримеры и дяди из бухгалтерии заходят только в приличный гараж. Репутация растёт от хороших продаж и падает от дымящихся провалов, а в магазине гараж улучшается до «Мастерской». И остерегайся кота.", 20));
         AddCloseButton(content, _helpPanel);
         _helpPanel.Visible = false;
     }
@@ -504,12 +555,23 @@ public partial class MainUI : CanvasLayer
         toolsTitle.AddThemeColorOverride("font_color", AccentColor);
         content.AddChild(toolsTitle);
 
-        var toolsScroll = new ScrollContainer { CustomMinimumSize = new Vector2(620, 210) };
+        var toolsScroll = new ScrollContainer { CustomMinimumSize = new Vector2(620, 150) };
         _toolsList = new VBoxContainer();
         _toolsList.AddThemeConstantOverride("separation", 8);
         _toolsList.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         toolsScroll.AddChild(_toolsList);
         content.AddChild(toolsScroll);
+
+        Label garageTitle = MakeLabel("Улучшение гаража", 24);
+        garageTitle.AddThemeColorOverride("font_color", AccentColor);
+        content.AddChild(garageTitle);
+
+        var garageScroll = new ScrollContainer { CustomMinimumSize = new Vector2(620, 150) };
+        _garageList = new VBoxContainer();
+        _garageList.AddThemeConstantOverride("separation", 8);
+        _garageList.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        garageScroll.AddChild(_garageList);
+        content.AddChild(garageScroll);
 
         AddCloseButton(content, _shopPanel);
         _shopPanel.Visible = false;

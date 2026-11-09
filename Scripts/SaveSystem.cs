@@ -44,6 +44,8 @@ public static class SaveSystem
         public List<string> Tools { get; set; } = new();
         public int ComputersSold { get; set; }
         public int TotalEarnedRub { get; set; }
+        public int Reputation { get; set; } = GameState.StartReputation;
+        public int GarageLevel { get; set; } = 1;
     }
 
     private static string SavePath => ProjectSettings.GlobalizePath("user://trashpc_save.json");
@@ -57,6 +59,8 @@ public static class SaveSystem
             Money = state.Money,
             ComputersSold = state.ComputersSold,
             TotalEarnedRub = state.TotalEarnedRub,
+            Reputation = state.Reputation,
+            GarageLevel = state.GarageLevel,
             Tools = new List<string>(state.OwnedTools)
         };
 
