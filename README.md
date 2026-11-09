@@ -8,6 +8,14 @@
 Движок: **Godot 4.3 + C# (.NET 8)**, экспорт в Android APK через GitHub Actions.
 Локально APK не собирается — только CI (`.github/workflows/build.yml`).
 
+✅ **Сборка работает**: workflow зелёный, готовый APK — артефакт
+`Trash-PC-Tycoon-debug-apk` на странице прогона GitHub Actions
+(например, Actions → Build Android APK → последний успешный run → Artifacts).
+По пути CI пришлось: поставить в джобу .NET 8, Temurin JDK 17 и Android SDK
+(в образе godot-ci их нет), прописать Editor Settings (SDK/Java/keystore),
+распаковать Android build template в `android/build` с `.build_version`,
+включить Gradle Build в пресете и импорт текстур ETC2/ASTC в `project.godot`.
+
 ## Статус: Модуль 3 — Клиенты, экономика, полировка и экспорт (финал)
 
 - **Клиент-школьник** (`Scripts/ClientController.cs`, `Scripts/ClientCatalog.cs`):
