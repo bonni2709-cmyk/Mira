@@ -14,7 +14,9 @@ public enum PartType
     ComputerCase,
     Cooler,
     Ssd,
-    Junk
+    Junk,
+    // 2.0/Модуль 2: добавляется ТОЛЬКО в конец — тип сериализуется в сейв числом.
+    RgbStrip
 }
 
 /// <summary>Состояние детали: от «выкопал и уже стыдно» до «почти честная подделка».</summary>
@@ -67,6 +69,7 @@ public sealed class PcPart
         PartType.ComputerCase => "Корпус",
         PartType.Cooler => "Кулер",
         PartType.Ssd => "SSD",
+        PartType.RgbStrip => "RGB-подсветка",
         _ => "Хлам"
     };
 

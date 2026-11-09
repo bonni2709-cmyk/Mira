@@ -30,6 +30,8 @@ public sealed class ClientData
     public float? MaxTempCelsius;
     /// <summary>Спецзаказ 2.0: собрать ПК целиком из иранского набора деталей.</summary>
     public bool IsIranianOrder;
+    /// <summary>2.0/Модуль 2: клиент-мажор требует RGB-подсветку в сборке.</summary>
+    public bool RequiresRgb;
 }
 
 public static class ClientCatalog
@@ -38,7 +40,8 @@ public static class ClientCatalog
         "Я подожду. Только это… почему от корпуса пахнет майонезом и горелым? А, ладно, не отвечай.";
 
     private sealed record Archetype(string Name, string[] PersonNames, string Game, string Intro,
-        int BudgetMin, int BudgetMax, Color Hoodie, Color Cap, ClientHat Hat, float? MaxTemp, int MinGarageLevel);
+        int BudgetMin, int BudgetMax, Color Hoodie, Color Cap, ClientHat Hat, float? MaxTemp, int MinGarageLevel,
+        bool Rgb = false);
 
     private static readonly Archetype[] Pool =
     {
@@ -62,6 +65,11 @@ public static class ClientCatalog
             "World of Tanks и 1С без тормозов",
             "Домашний комп помер перед отчётным кварталом. Надо, чтобы танки тянуло и 1С не думала по минуте.",
             2000, 3500, new Color(0.32f, 0.34f, 0.38f), new Color(0.25f, 0.25f, 0.28f), ClientHat.None, null, 2),
+        new("Мажор",
+            new[] { "Мажор Тимур, 16 лет", "Даня «папин бизнес»", "Кирилл, у которого айфон новее твоего ПК" },
+            "Киберпанк, чтобы СВЕТИЛОСЬ",
+            "Мне нужен комп. Чтобы Киберпанк. И чтобы RGB. Прямо чтобы весь светился, как ёлка у папы в офисе. Без подсветки даже не показывай — это не комп, а коробка.",
+            3200, 5800, new Color(0.72f, 0.62f, 0.25f), new Color(0.85f, 0.80f, 0.30f), ClientHat.Cap, null, 1, true),
         new("Стример",
             new[] { "Стример Влад", "Влад «почти тысяча подписчиков»" },
             "Киберпанк и стрим одновременно",
@@ -103,9 +111,11 @@ public static class ClientCatalog
         string person = arch.PersonNames[rng.Next(arch.PersonNames.Length)];
         int budget = (int)(rng.Next(arch.BudgetMin, arch.BudgetMax + 1) * budgetMultiplier);
 
-        string request = arch.MaxTemp.HasValue
-            ? $"Включи при мне: {arch.Game}. И чтобы не шумело! Если нагреется выше {arch.MaxTemp.Value:0} градусов — это уже не компьютер, а обогреватель, платить за обогреватель не буду."
-            : $"Запусти {arch.Game} прямо при мне. Продержится минуту и не задымится — плачу. Задымится — я уйду. Быстро.";
+        string request = arch.Rgb
+            ? "Запусти Киберпанк при мне на минуту. И главное: RGB-ЛЕНТА внутри, чтобы светилось и переливалось. Ленту ищи на свалке или в коробках AliExpress. Нет светодиодов — заплачу как за обычный комп, то есть обидно мало."
+            : arch.MaxTemp.HasValue
+                ? $"Включи при мне: {arch.Game}. И чтобы не шумело! Если нагреется выше {arch.MaxTemp.Value:0} градусов — это уже не компьютер, а обогреватель, платить за обогреватель не буду."
+                : $"Запусти {arch.Game} прямо при мне. Продержится минуту и не задымится — плачу. Задымится — я уйду. Быстро.";
 
         return new ClientData
         {
@@ -118,7 +128,8 @@ public static class ClientCatalog
             HoodieColor = arch.Hoodie,
             CapColor = arch.Cap,
             Hat = arch.Hat,
-            MaxTempCelsius = arch.MaxTemp
+            MaxTempCelsius = arch.MaxTemp,
+            RequiresRgb = arch.Rgb
         };
     }
 }

@@ -43,6 +43,8 @@ public static class PartCatalog
             new Color(0.44f, 0.42f, 0.40f), "Мощный. Громкий. Соседи будут знать, что ты играешь."),
         new("Корпус с наклейками «скорость +5»", PartType.ComputerCase, PartQuality.Worn, 95,
             new Color(0.55f, 0.40f, 0.30f), "По легенде гаража, наклейки правда добавляют кадров."),
+        new("RGB-лента «светится — и ладно»", PartType.RgbStrip, PartQuality.Worn, 130,
+            new Color(0.65f, 0.65f, 0.68f), "Бывший новогодний декор. Светится всеми цветами, мажоры сходят с ума."),
     };
 
     private static readonly Template[] EpicTemplates =
@@ -77,6 +79,8 @@ public static class PartCatalog
             new Color(0.60f, 0.48f, 0.30f), "Модель из 2027 года. Внутри, правда, 2015-й."),
         new("Процессор «128 ядер» по версии коробки", PartType.Cpu, PartQuality.Fake, 210,
             new Color(0.55f, 0.50f, 0.34f), "128 — это если считать каждую ножку дважды."),
+        new("RGB-лента «Диско-шар 3000»", PartType.RgbStrip, PartQuality.Fake, 190,
+            new Color(0.70f, 0.70f, 0.72f), "17 режимов, пульт в комплекте, светомузыка завидует. Для мажоров — обязательная программа."),
     };
 
     private static readonly string[] NothingLines =

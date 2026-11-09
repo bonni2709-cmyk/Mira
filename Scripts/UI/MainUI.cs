@@ -401,6 +401,7 @@ public partial class MainUI : CanvasLayer
     private void RefreshMoney()
     {
         _moneyLabel.Text = $"Деньги: {_state.Money} ₽";
+        _inventoryCountLabel.Text = $"Деталей: {_state.Inventory.Count}/{_state.InventoryCapacity}";
         _shopMoneyLabel.Text = $"В кассе: {_state.Money} ₽   •   Коробка: {PartCatalog.AliBoxPriceRub} ₽";
         _buyButton.Disabled = !_state.CanAfford(PartCatalog.AliBoxPriceRub);
         RefreshTools();
@@ -409,7 +410,7 @@ public partial class MainUI : CanvasLayer
 
     private void RefreshInventory()
     {
-        _inventoryCountLabel.Text = $"Деталей: {_state.Inventory.Count}";
+        _inventoryCountLabel.Text = $"Деталей: {_state.Inventory.Count}/{_state.InventoryCapacity}";
         foreach (Node child in _inventoryList.GetChildren())
         {
             child.QueueFree();

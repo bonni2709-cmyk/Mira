@@ -89,7 +89,7 @@ public partial class DumpUI : CanvasLayer
     private void Refresh()
     {
         _moneyLabel.Text = $"Деньги: {_state.Money} ₽";
-        _countLabel.Text = $"Деталей: {_state.Inventory.Count}";
+        _countLabel.Text = $"Деталей: {_state.Inventory.Count}/{_state.InventoryCapacity}";
     }
 
     private static StyleBoxFlat MakeStyle()

@@ -158,7 +158,7 @@ public partial class Main : Node3D
         {
             if (_heat.IsRunning)
             {
-                _heat.ApplyInstantCooling(6f);
+                _heat.ApplyInstantCooling(_state.OwnsTool(ToolsCatalog.Turbine) ? 11f : 6f);
                 _sound.PlayPop();
             }
         };
@@ -368,6 +368,10 @@ public partial class Main : Node3D
                 string status = missing.Count == 0
                     ? $"Сборка готова! Цена для клиента: {ComputeSalePriceRub()} ₽ (бюджет {_clientData.BudgetRub} ₽). Запускай Киберпанк."
                     : $"Собираем… не хватает: {string.Join(", ", missing)}. Цена будет около {ComputeSalePriceRub()} ₽.";
+                if (_clientData.RequiresRgb && !_build.HasRgb)
+                {
+                    status += " Мажор ждёт RGB-ленту (ищи на свалке и в коробках AliExpress): без подсветки заплатит на 40% меньше.";
+                }
                 _ui.SetClientDialogue(_clientData.Name, ClientCatalog.WaitingLine, status,
                     false, false, missing.Count == 0 && !_heat.IsRunning, false, true);
                 break;
@@ -503,6 +507,22 @@ public partial class Main : Node3D
             note += " Спецзаказ закрыт: ПК от аккумулятора уехал, соседи в шоке. Репутация +10!";
         }
 
+        if (_clientData.RequiresRgb)
+        {
+            if (_build.HasRgb)
+            {
+                paid = (int)(paid * 1.15f);
+                repDelta += 3;
+                note += " И ОНО СВЕТИТСЯ! Мажор в восторге: переплата +15% и обещание привести всех друзей.";
+            }
+            else
+            {
+                paid = (int)(paid * 0.6f);
+                repDelta = -4;
+                note += " Мажор поморщился: «А где светомузыка?» −40% к оплате и репутация −4. Светодиоды — это серьёзно.";
+            }
+        }
+
         _state.AddReputation(repDelta);
 
         _state.AddMoney(paid);
@@ -551,7 +571,9 @@ public partial class Main : Node3D
         _build.HammerHitsRequired = _state.OwnsTool(ToolsCatalog.BetterHammer) ? 1 : 2;
         _build.BlowDustMultiplier = _state.OwnsTool(ToolsCatalog.Vacuum) ? 2.0f : 1.0f;
         _build.HasRealPaste = _state.OwnsTool(ToolsCatalog.RealPaste);
-        _heat.PassiveCoolingPerSecond = _state.OwnsTool(ToolsCatalog.DeskFan) ? 1.6f : 0f;
+        _build.KnifeProtectsValue = _state.OwnsTool(ToolsCatalog.SwissKnife);
+        _heat.PassiveCoolingPerSecond = _state.OwnsTool(ToolsCatalog.Turbine) ? 2.2f
+            : _state.OwnsTool(ToolsCatalog.DeskFan) ? 1.6f : 0f;
     }
 
     private void OnGoToDump()
@@ -684,6 +706,12 @@ public partial class Main : Node3D
             return;
         }
 
+        if (_state.InventoryFull)
+        {
+            _ui.SetMessage($"Инвентарь полон ({_state.Inventory.Count}/{_state.InventoryCapacity})! Сдай лишнее барахольщику, поставь детали на стол или купи ящик «Кладовка» (+5 слотов).");
+            return;
+        }
+
         _heap.PlayDigEffect(_rng);
         int roll = _rng.Next(100);
 
@@ -758,6 +786,13 @@ public partial class Main : Node3D
         if (_pendingAliPart == null)
         {
             _ui.SetShopStatus("Вскрывать нечего: коробки нет. Закажи одну, оптимист.");
+            return;
+        }
+
+        if (_state.InventoryFull)
+        {
+            _ui.SetShopStatus($"Некуда класть: инвентарь полон ({_state.Inventory.Count}/{_state.InventoryCapacity}). Коробка подождёт вскрытия.");
+            _ui.SetMessage("Коробка смотрит укоризненно: инвентарь битком. Разгрузись — потом вскроем.");
             return;
         }
 

@@ -19,6 +19,12 @@ public partial class GameState : Node
 
     public int Money { get; private set; } = StartMoneyRub;
     public List<PcPart> Inventory { get; } = new();
+
+    // 2.0/Модуль 2: слоты инвентаря. Ящик «Кладовка» добавляет ещё пять.
+    public const int BaseInventorySlots = 15;
+    public const int CrateBonusSlots = 5;
+    public int InventoryCapacity => BaseInventorySlots + (OwnsTool(ToolsCatalog.Crate) ? CrateBonusSlots : 0);
+    public bool InventoryFull => Inventory.Count >= InventoryCapacity;
     public HashSet<string> OwnedTools { get; } = new();
     public int ComputersSold { get; private set; }
     public int TotalEarnedRub { get; private set; }

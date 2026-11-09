@@ -211,6 +211,12 @@ public partial class DumpLocation : Node3D
 
     private void DigHeap(TrashHeap heap)
     {
+        if (_state.InventoryFull)
+        {
+            _ui.SetMessage($"Рюкзак полон ({_state.Inventory.Count}/{_state.InventoryCapacity})! В гараже сдай лишнее барахольщику или купи ящик «Кладовка». Куча подождёт.");
+            return;
+        }
+
         if (_heapDigsLeft[heap] <= 0)
         {
             _ui.SetMessage("Эта куча пуста, как обещания продавцов. Ищи соседнюю.");

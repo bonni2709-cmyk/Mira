@@ -46,6 +46,11 @@ public partial class BuildController : Node3D
     public int HammerHitsRequired { get; set; } = 2;
     public float BlowDustMultiplier { get; set; } = 1.0f;
     public bool HasRealPaste { get; set; }
+    /// <summary>2.0/Модуль 2: нож «Швейцарец» отменяет штраф −20% к цене вбитых деталей.</summary>
+    public bool KnifeProtectsValue { get; set; }
+
+    /// <summary>2.0/Модуль 2: стоит ли в сборке RGB-лента (её жаждут мажоры).</summary>
+    public bool HasRgb => _installed.ContainsKey(PartType.RgbStrip);
 
     private static readonly Dictionary<PartType, Vector3> SlotPositions = new()
     {
@@ -58,6 +63,8 @@ public partial class BuildController : Node3D
         { PartType.Psu, new Vector3(-1.45f, 0.10f, 0.45f) },
         { PartType.Hdd, new Vector3(0.95f, 0.10f, -0.55f) },
         { PartType.Ssd, new Vector3(0.95f, 0.08f, 0.05f) },
+        // RGB-лента живёт на верхней грани корпуса и светит в душу.
+        { PartType.RgbStrip, new Vector3(-1.45f, 1.48f, 0f) },
     };
 
     private static readonly Vector3 PendingPosition = new(1.65f, 0.05f, 0.45f);
@@ -575,7 +582,7 @@ public partial class BuildController : Node3D
         int sum = 0;
         foreach (InstalledPart entry in _installed.Values)
         {
-            sum += entry.Hammered ? (int)(entry.Part.ValueRub * 0.8f) : entry.Part.ValueRub;
+            sum += entry.Hammered && !KnifeProtectsValue ? (int)(entry.Part.ValueRub * 0.8f) : entry.Part.ValueRub;
         }
 
         return sum;
