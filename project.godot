@@ -1,0 +1,44 @@
+; Project settings for Pocket Bunker (Godot 4.x)
+
+config_name="Pocket Bunker"
+
+application/config/name="Pocket Bunker"
+application/config/icon="res://assets/sprites/ui/icon.png"
+application/config/features/packed_string_tags=["Array","Color","Dictionary","PackedByteArray","PackedColorArray","PackedFloat32Array","PackedFloat64Array","PackedInt32Array","PackedInt64Array","PackedStringArray","PackedVector2Array","PackedVector3Array","Vector2","Vector2i","Vector2i32","Vector2i64","Vector3","Vector3i","Vector3i32","Vector3i64","Rect2","Rect2i","Transform2D","RID","Object","Node","Callable","Signal","Variant","Nil","Enum","Array","Dictionary","PackedArray","AABB","Basis","Quaternion","Plane","StringName","Rect2i32","Rect2i64","Rect2f32","Rect2f64","AABB"]
+
+application/run/main_scene="res://scenes/main.tscn"
+
+display/window/size/width=800
+display/window/size/height=600
+display/window/resizable=true
+display/window/per_pixel_transparency/enabled=false
+display/window/vsync/via_compositor=true
+display/window/stretch/mode="canvas_items"
+display/window/stretch/aspect=1
+
+rendering/quality/drivers/driver_3d/fallback/fallback_to_gl_compatibility=false
+
+rendering/lights_and_shadows/directional_shadow/max_distance=100.0
+rendering/lights_and_shadows/directional_shadow/size=1024
+rendering/lights_and_shadows/directional_shadow/bias/constant=0.003
+rendering/lights_and_shadows/directional_shadow/bias/normal=0.001
+
+input/mouse_emulation/touchscreen_emulation=true
+
+input/ui_up=Array["KEY_W","KEY_UP"]
+input/ui_down=Array["KEY_S","KEY_DOWN"]
+input/ui_left=Array["KEY_A","KEY_LEFT"]
+input/ui_right=Array["KEY_D","KEY_RIGHT"]
+input/ui_select=Array["KEY_RETURN","KEY_KP_ENTER","MOUSE_BUTTON_LEFT"]
+input/ui_cancel=Array["KEY_BACKSPACE","KEY_ESCAPE","MOUSE_BUTTON_RIGHT"]
+
+input/joy_deadzone=0.2
+
+audio/driver/driver=""
+
+[localization]
+
+[debug]
+
+[physics/2d/default_gravity_scale=1.0]
+[physics/2d/default_gravity=Vector2(0, 980)]

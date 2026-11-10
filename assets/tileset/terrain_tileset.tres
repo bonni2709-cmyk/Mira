@@ -1,0 +1,50 @@
+[gd_resource type="TileSet" load_steps=5 format=3 uid="terrain-tileset-v1"]
+
+[resource]
+
+sources = [ SubResource(0), SubResource(1), SubResource(2), SubResource(3) ]
+
+[SubResource type="TileSetAtlasSource" id="0"]
+name = "floor"
+texture = ExtResource("floor")
+regions/0/id = 0
+regions/0/region = Rect2(0, 0, 16, 16)
+regions/0/alternative_tiles = []
+tile_size = Vector2i(16, 16)
+separation = Vector2i(0, 0)
+margin = Vector2i(0, 0)
+
+[SubResource type="TileSetAtlasSource" id="1"]
+name = "dirt_block"
+texture = ExtResource("dirt")
+regions/0/id = 1
+regions/0/region = Rect2(0, 0, 16, 16)
+regions/0/alternative_tiles = []
+tile_size = Vector2i(16, 16)
+separation = Vector2i(0, 0)
+margin = Vector2i(0, 0)
+
+[SubResource type="TileSetAtlasSource" id="2"]
+name = "stone_block"
+texture = ExtResource("stone")
+regions/0/id = 2
+regions/0/region = Rect2(0, 0, 16, 16)
+regions/0/alternative_tiles = []
+tile_size = Vector2i(16, 16)
+separation = Vector2i(0, 0)
+margin = Vector2i(0, 0)
+
+[SubResource type="TileSetAtlasSource" id="3"]
+name = "bunker_wall"
+texture = ExtResource("wall")
+regions/0/id = 3
+regions/0/region = Rect2(0, 0, 16, 16)
+regions/0/alternative_tiles = []
+tile_size = Vector2i(16, 16)
+separation = Vector2i(0, 0)
+margin = Vector2i(0, 0)
+
+[ext_resource path="res://assets/sprites/blocks/floor.png" type="Texture2D" id="floor"]
+[ext_resource path="res://assets/sprites/blocks/dirt_block.png" type="Texture2D" id="dirt"]
+[ext_resource path="res://assets/sprites/blocks/stone_block.png" type="Texture2D" id="stone"]
+[ext_resource path="res://assets/sprites/blocks/bunker_wall.png" type="Texture2D" id="wall"]

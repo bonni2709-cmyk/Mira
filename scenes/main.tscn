@@ -1,0 +1,22 @@
+[gd_scene load_steps=6 format=3 uid="main-scene-v1"]
+
+[ext_resource type="Script" path="res://scripts/main.gd" uid="main-script-v1"]
+[ext_resource type="TileSet" path="res://assets/tileset/terrain_tileset.tres" uid="tileset-v1"]
+[ext_resource type="PackedScene" path="res://scenes/player.tscn" uid="player-scene-v1"]
+
+[node name="Main" type="Node2D"]
+script = ExtResource("main-script-v1")
+
+[node name="CanvasModulate" type="CanvasModulate" parent="."]
+color = Color(0.16, 0.16, 0.22)
+
+[node name="DirectionalLight2D" type="DirectionalLight2D" parent="."]
+energy = 0.12
+color = Color(0.45, 0.47, 0.55)
+
+[node name="TileMap" type="TileMap" parent="."]
+name = "World"
+tile_set = ExtResource("tileset-v1")
+
+[node name="Player" parent="." instance=ExtResource("player-scene-v1")]
+position = Vector2(80, 80)

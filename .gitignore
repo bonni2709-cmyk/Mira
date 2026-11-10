@@ -1,0 +1,22 @@
+# Godot
+*.godot/
+.import/
+*.translation
+*.export_presets.cfg
+*.export
+*.debug.symbols
+*.pck
+
+# Build artifacts
+build/
+*.apk
+*.aab
+
+# Python / assets generation
+__pycache__/
+*.pyc
+.env
+
+# OS
+.DS_Store
+Thumbs.db

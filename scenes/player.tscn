@@ -1,0 +1,33 @@
+[gd_scene load_steps=5 format=3 uid="player-scene-v1"]
+
+[ext_resource type="Script" path="res://scripts/player.gd" uid="player-script-v1"]
+[ext_resource type="Texture2D" path="res://assets/sprites/entities/player.png" uid="player-tex-v1"]
+[ext_resource type="Texture2D" path="res://assets/sprites/ui/light_mask.png" uid="light-mask-v1"]
+
+[node name="Player" type="CharacterBody2D"]
+script = ExtResource("player-script-v1")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("player-tex-v1")
+offset = Vector2(16, 16)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(16, 24)
+
+[node name="CollisionShape2D/Shape" type="RectangleShape2D"]
+size = Vector2(16, 24)
+
+[node name="PointLight2D" type="PointLight2D" parent="."]
+name = "Lantern"
+position = Vector2(16, 10)
+energy = 0.9
+range = 150
+color = Color(1.0, 0.94, 0.8)
+texture = ExtResource("light-mask-v1")
+shadow = 1
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(16, 0)
+current = true
+zoom = Vector2(2.5, 2.5)
+smoothing_enabled = true
