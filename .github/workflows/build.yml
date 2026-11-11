@@ -65,6 +65,8 @@ jobs:
           if [ -d ~/.local/share/godot/export_templates/templates ]; then
             cp -r ~/.local/share/godot/export_templates/templates/* ~/.local/share/godot/export_templates/ 2>/dev/null || true
           fi
+          echo "=== Extracted templates ==="
+          ls -laR ~/.local/share/godot/export_templates/
 
       - name: Configure Godot for Android export
         run: |
@@ -93,6 +95,12 @@ jobs:
           cat .export_presets.cfg
           echo "=== Project files ==="
           ls -la
+
+      - name: Verify export templates before build
+        run: |
+          echo "=== Templates available ==="
+          ls -la ~/.local/share/godot/export_templates/ 2>/dev/null || echo "no templates"
+          file ~/.local/share/godot/export_templates/*.apk 2>/dev/null || echo "no apk files found"
 
       - name: Export Android APK
         env:
