@@ -61,6 +61,23 @@ jobs:
           wget -q "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_export_templates.tpz" -O export.tpz
           mkdir -p ~/.local/share/godot/export_templates/
           unzip -o export.tpz -d ~/.local/share/godot/export_templates/
+          # Сдвинуть шаблоны на уровень выше если они в подпапке templates/
+          if [ -d ~/.local/share/godot/export_templates/templates ]; then
+            cp -r ~/.local/share/godot/export_templates/templates/* ~/.local/share/godot/export_templates/ 2>/dev/null || true
+          fi
+
+      - name: Configure Godot for Android export
+        run: |
+          mkdir -p ~/.config/godot ~/.android
+          cat > ~/.config/godot/editor_settings-4.2.2.tres << EOF
+[gd_resource type="EditorSettings" format=3 uid="android-export-config"]
+
+[resource]
+
+/android/custom_path = "${HOME}/android-sdk"
+/android/debug_keystore_path = "${HOME}/.android/debug.keystore"
+EOF
+          keytool -genkey -v -keystore "${HOME}/.android/debug.keystore" -alias androiddebugkey -storepass android -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" 2>/dev/null || true
 
       - name: Export Android APK
         env:
