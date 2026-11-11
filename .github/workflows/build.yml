@@ -108,15 +108,20 @@ jobs:
         run: |
           cd "$GITHUB_WORKSPACE"
           mkdir -p build
-          # Godot headless экспорт из рабочей директории проекта
+          # Godot headless экспорт
           ${{ steps.get-godot.outputs.GODOT_BIN }} \
             --headless \
+            --verbose \
             --export-debug "Android" \
             "build/PocketBunker.apk" \
             --quit-on-finish \
             2>&1 | tee "$GITHUB_WORKSPACE/godot_export.log" || true
           echo "=== Build directory contents ==="
           ls -la build/ 2>/dev/null || echo "build dir empty or missing"
+          echo "=== All APK files in workspace ==="
+          find . -name "*.apk" -type f 2>/dev/null || echo "no apk files found"
+          echo "=== All log files ==="
+          find . -name "*.log" -type f 2>/dev/null || echo "no log files found"
 
       - name: Upload Godot export log
         if: always()
@@ -126,7 +131,15 @@ jobs:
           path: godot_export.log
           retention-days: 7
 
-      - name: Upload APK artifact
+      - name: Upload all APK files
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: All-APK-Files
+          path: "**/*.apk"
+          retention-days: 7
+
+      - name: Upload APK artifact (specific)
         if: success()
         uses: actions/upload-artifact@v4
         with:
