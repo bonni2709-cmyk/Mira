@@ -99,14 +99,25 @@ jobs:
           ANDROID_SDK_ROOT: ${{ env.ANDROID_SDK_ROOT }}
         run: |
           mkdir -p build
-          # Godot headless экспорт release (без quit-on-finish)
+          # Godot headless экспорт с подробным логированием в файл
           ${{ steps.get-godot.outputs.GODOT_BIN }} \
             --headless \
             --path "$GITHUB_WORKSPACE" \
-            --export-release "Android" \
-            "$GITHUB_WORKSPACE/build/PocketBunker.apk"
+            --export-debug "Android" \
+            "$GITHUB_WORKSPACE/build/PocketBunker.apk" \
+            --quit-on-finish \
+            2>&1 | tee "$GITHUB_WORKSPACE/godot_export.log" || true
+
+      - name: Upload Godot export log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Godot-Export-Log
+          path: godot_export.log
+          retention-days: 7
 
       - name: Upload APK artifact
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: PocketBunker-APK
