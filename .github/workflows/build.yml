@@ -108,12 +108,14 @@ jobs:
         run: |
           cd "$GITHUB_WORKSPACE"
           mkdir -p build
-          # Godot headless экспорт (использует export_path из пресета)
+          # Godot headless экспорт с захватом лога
+          set -o pipefail
           ${{ steps.get-godot.outputs.GODOT_BIN }} \
             --headless \
             --path "$GITHUB_WORKSPACE" \
-            --export-debug "Android"
-          echo "Exit code: $?"
+            --export-debug "Android" \
+            "build/PocketBunker.apk" \
+            2>&1 | tee "$GITHUB_WORKSPACE/godot_export.log"
           echo "=== Build directory contents ==="
           ls -la build/ 2>/dev/null || echo "build dir empty or missing"
           echo "=== All APK files in workspace ==="
