@@ -34,6 +34,8 @@ input/ui_cancel=Array["KEY_BACKSPACE","KEY_ESCAPE","MOUSE_BUTTON_RIGHT"]
 
 input/joy_deadzone=0.2
 
+input/craft_menu=Array["KEY_C"]
+
 audio/driver/driver=""
 
 [localization]

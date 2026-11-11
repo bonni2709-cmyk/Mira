@@ -1,0 +1,88 @@
+[gd_scene load_steps=11 format=3 uid="craft-menu-v1"]
+
+[ext_resource type="Script" path="res://scripts/craft_menu.gd" uid="craft-menu-script-v1"]
+[ext_resource type="Font" path="res://builtin/fonts/default" uid="default-font-v1"]
+[ext_resource type="Texture2D" path="res://assets/sprites/ui/icon.png" uid="icon-tex-v1"]
+
+[node name="CraftMenu" type="CanvasLayer"]
+script = ExtResource("craft-menu-script-v1")
+layer = 100
+
+[node name="Panel" type="TextureRect" parent="."]
+size = Vector2(340, 420)
+expand_mode = 1
+tile_mode = 2
+modulate = Color(0.15, 0.15, 0.2, 0.92)
+anchors_preset = 15
+
+[node name="Panel/Title" type="Label" parent="Panel"]
+text = "ПОДБУНКЕР — КРАФТ И СТРОЙКА"
+size = Vector2(300, 30)
+position = Vector2(20, 10)
+custom_colors/font_color = Color(1, 0.85, 0.4)
+custom_colors/font_outline_color = Color(0, 0, 0, 0.8)
+
+[node name="Panel/Resources" type="Label" parent="Panel"]
+name = "Resources"
+text = "Земля: 0  Камень: 0  Патроны: 0  Монеты: 0"
+size = Vector2(300, 24)
+position = Vector2(20, 46)
+custom_colors/font_color = Color(0.9, 0.9, 0.9)
+
+[node name="Panel/DayNight" type="Label" parent="Panel"]
+name = "DayNight"
+text = "ДЕНЬ"
+size = Vector2(100, 24)
+position = Vector2(220, 46)
+custom_colors/font_color = Color(0.6, 1, 0.6)
+
+[node name="Panel/BtnWall" type="Button" parent="Panel"]
+text = "Построить стену (Камень×5)"
+size = Vector2(140, 34)
+position = Vector2(20, 82)
+button_group = ExtResource("build-group")
+
+[node name="Panel/BtnTurret" type="Button" parent="Panel"]
+text = "Турель (Камень×10, Патроны×5)"
+size = Vector2(140, 34)
+position = Vector2(180, 82)
+button_group = ExtResource("build-group")
+
+[node name="Panel/BtnGenerator" type="Button" parent="Panel"]
+text = "Генератор (Камень×15, Земля×10)"
+size = Vector2(140, 34)
+position = Vector2(20, 124)
+button_group = ExtResource("build-group")
+
+[node name="Panel/BtnCancel" type="Button" parent="Panel"]
+text = "Отмена строительства"
+size = Vector2(140, 34)
+position = Vector2(180, 124)
+button_group = ExtResource("build-group")
+
+[node name="Panel/BtnAmmo" type="Button" parent="Panel"]
+text = "Собрать патроны (Камень×5, Монеты×10)"
+size = Vector2(300, 34)
+position = Vector2(20, 166)
+
+[node name="Panel/BtnHeal" type="Button" parent="Panel"]
+text = "Аптечка (Камень×3, Монеты×15)"
+size = Vector2(300, 34)
+position = Vector2(20, 208)
+
+[node name="Panel/BtnSave" type="Button" parent="Panel"]
+text = "💾 Сохранить игру"
+size = Vector2(140, 34)
+position = Vector2(20, 258)
+
+[node name="Panel/BtnLoad" type="Button" parent="Panel"]
+text = "📂 Загрузить игру"
+size = Vector2(140, 34)
+position = Vector2(180, 258)
+
+[node name="Panel/BtnClose" type="Button" parent="Panel"]
+text = "Закрыть"
+size = Vector2(300, 34)
+position = Vector2(20, 304)
+
+[ext_resource type="ButtonGroup" id="build-group"]

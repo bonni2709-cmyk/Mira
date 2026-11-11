@@ -1,0 +1,33 @@
+[gd_scene load_steps=4 format=3 uid="zombie-scene-v2"]
+
+[ext_resource type="Script" path="res://scripts/zombie.gd" uid="zombie-script-v2"]
+[ext_resource type="Texture2D" path="res://assets/sprites/entities/zombie.png" uid="zombie-tex-v2"]
+[ext_resource type="PackedScene" path="res://scenes/main.tscn" uid="main-scene-v2"]
+
+[node name="Zombie" type="CharacterBody2D"]
+groups = ["zombie"]
+script = ExtResource("zombie-script-v2")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("zombie-tex-v2")
+offset = Vector2(16, 16)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(16, 20)
+
+[node name="CollisionShape2D/Shape" type="RectangleShape2D"]
+size = Vector2(14, 24)
+
+[node name="AttackArea" type="Area2D" parent="."]
+position = Vector2(16, 16)
+
+[node name="AttackArea/CollisionShape2D" type="CollisionShape2D"]
+shape = ExtResource("attack-circle")
+
+[node name="HitFlash" type="ColorRect" parent="."]
+size = Vector2(32, 32)
+color = Color(1, 0, 0)
+visible = false
+modulate = Color(1, 1, 1, 0)
+
+[ext_resource shape="CircleShape2D" id="attack-circle" radius=16]

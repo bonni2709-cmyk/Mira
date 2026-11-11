@@ -1,16 +1,22 @@
-[gd_scene load_steps=6 format=3 uid="main-scene-v1"]
+[gd_scene load_steps=8 format=3 uid="main-scene-v3"]
 
 [ext_resource type="Script" path="res://scripts/main.gd" uid="main-script-v1"]
 [ext_resource type="TileSet" path="res://assets/tileset/terrain_tileset.tres" uid="tileset-v1"]
 [ext_resource type="PackedScene" path="res://scenes/player.tscn" uid="player-scene-v1"]
+[ext_resource type="PackedScene" path="res://scenes/zombie.tscn" uid="zombie-scene-v1"]
+[ext_resource type="PackedScene" path="res://scenes/turret.tscn" uid="turret-scene-v1"]
+[ext_resource type="PackedScene" path="res://scenes/bullet.tscn" uid="bullet-scene-v1"]
+[ext_resource type="PackedScene" path="res://scenes/craft_menu.tscn" uid="craft-menu-v1"]
 
 [node name="Main" type="Node2D"]
+groups = ["main"]
 script = ExtResource("main-script-v1")
 
 [node name="CanvasModulate" type="CanvasModulate" parent="."]
 color = Color(0.16, 0.16, 0.22)
 
 [node name="DirectionalLight2D" type="DirectionalLight2D" parent="."]
+name = "SunLight"
 energy = 0.12
 color = Color(0.45, 0.47, 0.55)
 
@@ -18,5 +24,11 @@ color = Color(0.45, 0.47, 0.55)
 name = "World"
 tile_set = ExtResource("tileset-v1")
 
+[node name="Zombies" type="Node2D" parent="."]
+[node name="TurretHolder" type="Node2D" parent="."]
+[node name="Bullets" type="Node2D" parent="."]
+
 [node name="Player" parent="." instance=ExtResource("player-scene-v1")]
 position = Vector2(80, 80)
+
+[node name="CraftMenu" parent="." instance=ExtResource("craft-menu-v1")]

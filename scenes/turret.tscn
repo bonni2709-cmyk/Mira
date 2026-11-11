@@ -1,0 +1,35 @@
+[gd_scene load_steps=4 format=3 uid="turret-scene-v2"]
+
+[ext_resource type="Script" path="res://scripts/turret.gd" uid="turret-script-v2"]
+[ext_resource type="Texture2D" path="res://assets/sprites/entities/turret.png" uid="turret-tex-v2"]
+
+[node name="Turret" type="Node2D"]
+script = ExtResource("turret-script-v2")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("turret-tex-v2")
+offset = Vector2(32, 32)
+
+[node name="HeadPivot" type="Node2D" parent="."]
+position = Vector2(32, 20)
+
+[node name="HeadPivot/Head" type="Sprite2D"]
+texture = ExtResource("turret-tex-v2")
+offset = Vector2(32, 32)
+modulate = Color(0.8, 0.8, 0.8)
+
+[node name="DetectionArea" type="Area2D" parent="."]
+position = Vector2(32, 32)
+
+[node name="DetectionArea/CollisionShape2D" type="CollisionShape2D"]
+shape = ExtResource("range-shape")
+
+[node name="MuzzleFlash" type="ColorRect" parent="HeadPivot/Head"]
+size = Vector2(8, 8)
+color = Color(1, 0.6, 0.2)
+visible = false
+modulate = Color(1, 1, 1, 0)
+
+[node name="FireSound" type="AudioStreamPlayer" parent="."]
+
+[ext_resource shape="CircleShape2D" id="range-shape" radius=200]

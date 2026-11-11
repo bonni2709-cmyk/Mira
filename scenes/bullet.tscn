@@ -1,0 +1,16 @@
+[gd_scene load_steps=3 format=3 uid="bullet-scene-v2"]
+
+[ext_resource type="Script" path="res://scripts/bullet.gd" uid="bullet-script-v2"]
+[ext_resource type="Texture2D" path="res://assets/sprites/items/bullet.png" uid="bullet-tex-v2"]
+
+[node name="Bullet" type="Area2D"]
+script = ExtResource("bullet-script-v2")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("bullet-tex-v2")
+offset = Vector2(4, 4)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = ExtResource("bullet-shape")
+
+[ext_resource shape="CircleShape2D" id="bullet-shape" radius=4]
