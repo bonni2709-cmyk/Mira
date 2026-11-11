@@ -12,6 +12,8 @@ extends Node2D
 @onready var turrets_parent: Node2D = $TurretHolder
 @onready var bullets_parent: Node2D = $Bullets
 @onready var camera: Camera2D = $Player/Camera2D
+@onready var hud: CanvasLayer = $HUD
+@onready var lore_manager: Node = $LoreManager
 
 # --- Константы сетки ---
 const CELL_SIZE: int = 16
@@ -155,6 +157,7 @@ func _process_day_night(delta: float) -> void:
 			cycle_timer = 0
 			_apply_lighting(true)
 			print("Наступила НОЧЬ — зомби выходят!")
+			lore_manager.show_note("first_night", auto_close=6.0)
 
 	# Плавное изменение освещения в зависимости от фазы
 	_apply_lighting(is_night)
@@ -253,11 +256,13 @@ func _place_building(cell_pos: Vector2i, b_type: String) -> bool:
 		turret.main = self
 		turrets_parent.add_child(turret)
 		spawn_dust(map_to_world(cell_pos))
+		lore_manager.show_note("turret_built", auto_close=5.0)
 	elif b_type == "generator":
 		_set_cell(cell_pos, "floor")
 		var gen: Dictionary = {"pos": cell_pos, "key": _key(cell_pos)}
 		generators.append(gen)
 		spawn_dust(map_to_world(cell_pos))
+		lore_manager.show_note("generator", auto_close=5.0)
 	print("Построено: ", b_type)
 	return true
 
@@ -389,9 +394,15 @@ func on_zombie_died() -> void:
 
 func on_player_died() -> void:
 	print("ИГРОК ПОГИБ")
-	# Экран смерти будет в Модуле 3 (UI)
-	# Пока что просто пауза
-	get_tree().paused = true
+	if hud:
+		hud.show_death()
+
+func show_low_hp_lore() -> void:
+	lore_manager.show_note("low_hp", auto_close=5.0)
+
+func spawn_damage_number(position: Vector2, amount: int, critical: bool = false) -> void:
+	if hud:
+		hud.show_damage_number(position, amount, critical)
 
 # ============================================================================
 # Геттеры для UI

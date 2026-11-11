@@ -45,6 +45,11 @@ func take_damage(amount: int) -> void:
 	hp -= amount
 	if main.has_method("shake_camera"):
 		main.shake_camera(8.0, 0.2)
+	if main.has_method("spawn_damage_number"):
+		main.spawn_damage_number(global_position, amount, critical=False)
+	if hp <= 30 and hp > 0:
+		if main.has_method("show_low_hp_lore"):
+			main.show_low_hp_lore()
 	if hp <= 0:
 		hp = 0
 		if main.has_method("on_player_died"):

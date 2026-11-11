@@ -1,0 +1,88 @@
+[gd_scene load_steps=16 format=3 uid="hud-v1"]
+
+[ext_resource type="Script" path="res://scripts/ui/hud.gd" uid="hud-script-v1"]
+[ext_resource type="Font" path="res://builtin/fonts/default" uid="default-font-v1"]
+
+[node name="HUD" type="CanvasLayer"]
+script = ExtResource("hud-script-v1")
+layer = 200
+
+[node name="HUD/TopPanel" type="MarginContainer" parent="HUD"]
+size_flags_horizontal = 1
+size_flags_vertical = 1
+anchor_preset = 1
+position = Vector2(10, 10)
+size = Vector2(260, 60)
+
+[node name="HUD/TopPanel/VBoxContainer" type="VBoxContainer" parent="HUD/TopPanel"]
+[node name="HUD/TopPanel/VBoxContainer/HPLabel" type="Label" parent="HUD/TopPanel/VBoxContainer"]
+text = "❤ HP: 100/100"
+custom_colors/font_color = Color(1, 0.4, 0.4)
+custom_colors/font_outline_color = Color(0, 0, 0, 0.8)
+custom_colors/font_outline_size = Vector2(1, 1)
+[node name="HUD/TopPanel/VBoxContainer/ResLabel" type="Label" parent="HUD/TopPanel/VBoxContainer"]
+text = "🟤 З:0 ⚪ К:0 💥 П:0 🪙 М:0"
+custom_colors/font_color = Color(0.9, 0.9, 0.9)
+custom_colors/font_outline_color = Color(0, 0, 0, 0.8)
+custom_colors/font_outline_size = Vector2(1, 1)
+[node name="HUD/TopPanel/VBoxContainer/CycleLabel" type="Label" parent="HUD/TopPanel/VBoxContainer"]
+text = "☀ ДЕНЬ"
+custom_colors/font_color = Color(0.8, 1, 0.8)
+custom_colors/font_outline_color = Color(0, 0, 0, 0.8)
+custom_colors/font_outline_size = Vector2(1, 1)
+
+[node name="HUD/BottomPanel" type="MarginContainer" parent="HUD"]
+size_flags_horizontal = 1
+size_flags_vertical = 1
+anchor_preset = 15
+position = Vector2(10, 10)
+size = Vector2(300, 110)
+
+[node name="HUD/BottomPanel/HBoxContainer" type="HBoxContainer" parent="HUD/BottomPanel"]
+[node name="HUD/BottomPanel/HBoxContainer/BtnDig" type="Button" parent="HUD/BottomPanel/HBoxContainer"]
+text = "🕳 КОПАТЬ"
+size = Vector2(100, 70)
+custom_colors/font_color = Color(1, 1, 1)
+custom_colors/font_outline_color = Color(0, 0, 0, 0.8)
+custom_colors/font_outline_size = Vector2(1, 1)
+[node name="HUD/BottomPanel/HBoxContainer/BtnShoot" type="Button" parent="HUD/BottomPanel/HBoxContainer"]
+text = "🔫 СТРЕЛЯТЬ"
+size = Vector2(100, 70)
+custom_colors/font_color = Color(1, 0.8, 0.4)
+custom_colors/font_outline_color = Color(0, 0, 0, 0.8)
+custom_colors/font_outline_size = Vector2(1, 1)
+[node name="HUD/BottomPanel/HBoxContainer/BtnBuild" type="Button" parent="HUD/BottomPanel/HBoxContainer"]
+text = "🧱 СТРОИТЬ"
+size = Vector2(100, 70)
+custom_colors/font_color = Color(0.6, 1, 1)
+custom_colors/font_outline_color = Color(0, 0, 0, 0.8)
+custom_colors/font_outline_size = Vector2(1, 1)
+
+[node name="HUD/DamageNumberContainer" type="Node2D" parent="HUD"]
+
+[node name="HUD/DeathScreen" type="Control" parent="HUD"]
+visible = false
+anchors_preset = 15
+size = Vector2(300, 200)
+
+[node name="HUD/DeathScreen/ColorRect" type="ColorRect" parent="HUD/DeathScreen"]
+size = Vector2(300, 200)
+color = Color(0.1, 0, 0, 0.85)
+
+[node name="HUD/DeathScreen/VBoxContainer" type="VBoxContainer" parent="HUD/DeathScreen"]
+anchor_preset = 15
+
+[node name="HUD/DeathScreen/VBoxContainer/DeathLabel" type="Label" parent="HUD/DeathScreen/VBoxContainer"]
+text = "ВЫ ПОГИБЛИ"
+custom_colors/font_color = Color(1, 0.3, 0.3)
+custom_colors/font_size = 32
+custom_colors/font_outline_color = Color(0, 0, 0, 1)
+custom_colors/font_outline_size = Vector2(2, 2)
+
+[node name="HUD/DeathScreen/VBoxContainer/BtnRestart" type="Button" parent="HUD/DeathScreen/VBoxContainer"]
+text = "ПЕРЕЗАПУСК"
+size = Vector2(160, 40)
+
+[node name="HUD/DeathScreen/VBoxContainer/BtnMenu" type="Button" parent="HUD/DeathScreen/VBoxContainer"]
+text = "В ГЛАВНОЕ МЕНЮ"
+size = Vector2(160, 40)

@@ -69,6 +69,9 @@ func _attack() -> void:
 	# Урон игроку
 	if target.has_method("take_damage"):
 		target.take_damage(damage)
+	# Всплывающая цифра урона
+	if main.has_method("spawn_damage_number"):
+		main.spawn_damage_number(target.global_position, damage, critical=False)
 	# Частицы крови при ударе
 	if main.has_method("spawn_blood"):
 		main.spawn_blood(global_position)

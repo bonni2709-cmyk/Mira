@@ -1,0 +1,44 @@
+[gd_scene load_steps=6 format=3 uid="lore-note-v1"]
+
+[ext_resource type="Script" path="res://scripts/ui/lore_note.gd" uid="lore-note-script-v1"]
+[ext_resource type="Font" path="res://builtin/fonts/default" uid="default-font-v1"]
+
+[node name="LoreNote" type="Control"]
+anchors_preset = 15
+size = Vector2(340, 200)
+
+[node name="LoreNote/ColorRect" type="ColorRect" parent="LoreNote"]
+size = Vector2(340, 200)
+color = Color(0.12, 0.1, 0.15, 0.95)
+
+[node name="LoreNote/TextureRect" type="TextureRect" parent="LoreNote"]
+texture = ExtResource("icon-tex")
+size = Vector2(48, 48)
+position = Vector2(10, 10)
+
+[node name="LoreNote/VBoxContainer" type="VBoxContainer" parent="LoreNote"]
+anchors_preset = 15
+offset_left = 70
+offset_top = 20
+offset_right = 20
+offset_bottom = 20
+
+[node name="LoreNote/VBoxContainer/TitleLabel" type="Label" parent="LoreNote/VBoxContainer"]
+text = "Записка"
+custom_colors/font_color = Color(1, 0.85, 0.4)
+custom_colors/font_size = 24
+custom_colors/font_outline_color = Color(0, 0, 0, 0.8)
+custom_colors/font_outline_size = Vector2(1, 1)
+
+[node name="LoreNote/VBoxContainer/TextLabel" type="Label" parent="LoreNote/VBoxContainer"]
+text = "Текст лора здесь."
+custom_colors/font_color = Color(0.95, 0.95, 0.95)
+custom_colors/font_size = 16
+custom_colors/font_outline_color = Color(0, 0, 0, 0.6)
+custom_colors/font_outline_size = Vector2(1, 1)
+
+[node name="LoreNote/VBoxContainer/CloseBtn" type="Button" parent="LoreNote/VBoxContainer"]
+text = "Закрыть"
+size = Vector2(100, 32)
+
+[ext_resource type="Texture2D" path="res://assets/sprites/ui/icon.png" id="icon-tex"]

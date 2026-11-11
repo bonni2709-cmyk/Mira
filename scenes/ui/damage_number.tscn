@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="damage-number-v1"]
+
+[node name="DamageNumber" type="Label"]
+text = "0"
+custom_colors/font_color = Color(1, 1, 1)
+custom_colors/font_outline_color = Color(0, 0, 0, 1)
+custom_colors/font_outline_size = Vector2(2, 2)

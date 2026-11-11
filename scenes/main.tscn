@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="main-scene-v3"]
+[gd_scene load_steps=10 format=3 uid="main-scene-v4"]
 
 [ext_resource type="Script" path="res://scripts/main.gd" uid="main-script-v1"]
 [ext_resource type="TileSet" path="res://assets/tileset/terrain_tileset.tres" uid="tileset-v1"]
@@ -7,6 +7,8 @@
 [ext_resource type="PackedScene" path="res://scenes/turret.tscn" uid="turret-scene-v1"]
 [ext_resource type="PackedScene" path="res://scenes/bullet.tscn" uid="bullet-scene-v1"]
 [ext_resource type="PackedScene" path="res://scenes/craft_menu.tscn" uid="craft-menu-v1"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" uid="hud-v1"]
+[ext_resource type="PackedScene" path="res://scenes/ui/lore_note.tscn" uid="lore-note-v1"]
 
 [node name="Main" type="Node2D"]
 groups = ["main"]
@@ -32,3 +34,7 @@ tile_set = ExtResource("tileset-v1")
 position = Vector2(80, 80)
 
 [node name="CraftMenu" parent="." instance=ExtResource("craft-menu-v1")]
+
+[node name="HUD" parent="." instance=ExtResource("hud-v1")]
+
+[node name="LoreManager" type="Node" parent="."]
