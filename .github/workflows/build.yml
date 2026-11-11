@@ -77,6 +77,23 @@ jobs:
           echo "/android/debug_keystore_path = \"${HOME}/.android/debug.keystore\"" >> ~/.config/godot/editor_settings-4.2.2.tres
           keytool -genkey -v -keystore "${HOME}/.android/debug.keystore" -alias androiddebugkey -storepass android -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" 2>/dev/null || true
 
+      - name: Debug environment before export
+        env:
+          ANDROID_SDK_ROOT: ${{ env.ANDROID_SDK_ROOT }}
+        run: |
+          echo "=== Godot binary ==="
+          ls -la ${{ steps.get-godot.outputs.GODOT_BIN }}
+          echo "=== Export templates ==="
+          ls -laR ~/.local/share/godot/export_templates/ 2>/dev/null || echo "no templates dir"
+          echo "=== Android SDK ==="
+          ls -la $ANDROID_SDK_ROOT
+          echo "=== Platform tools ==="
+          ls -la $ANDROID_SDK_ROOT/platform-tools 2>/dev/null || echo "no platform-tools"
+          echo "=== Preset file ==="
+          cat .export_presets.cfg
+          echo "=== Project files ==="
+          ls -la
+
       - name: Export Android APK
         env:
           ANDROID_SDK_ROOT: ${{ env.ANDROID_SDK_ROOT }}
