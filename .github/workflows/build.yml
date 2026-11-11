@@ -82,8 +82,8 @@ jobs:
           ANDROID_SDK_ROOT: ${{ env.ANDROID_SDK_ROOT }}
         run: |
           mkdir -p build
-          # Используем xvfb для headless рендеринга (нужен для экспорта ресурсов)
-          xvfb-run -a ${{ steps.get-godot.outputs.GODOT_BIN }} \
+          # Godot headless не требует X11 для экспорта
+          ${{ steps.get-godot.outputs.GODOT_BIN }} \
             --headless \
             --export-release "Android" build/PocketBunker.apk \
             --quit-on-finish
