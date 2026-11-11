@@ -99,13 +99,12 @@ jobs:
           ANDROID_SDK_ROOT: ${{ env.ANDROID_SDK_ROOT }}
         run: |
           mkdir -p build
-          # Godot headless экспорт с полным набором флагов
-          xvfb-run -a ${{ steps.get-godot.outputs.GODOT_BIN }} \
+          # Godot headless экспорт release (без quit-on-finish)
+          ${{ steps.get-godot.outputs.GODOT_BIN }} \
             --headless \
             --path "$GITHUB_WORKSPACE" \
-            --export-debug "Android" \
-            "$GITHUB_WORKSPACE/build/PocketBunker.apk" \
-            --quit-on-finish
+            --export-release "Android" \
+            "$GITHUB_WORKSPACE/build/PocketBunker.apk"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
