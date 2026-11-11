@@ -61,12 +61,9 @@ jobs:
           wget -q "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_export_templates.tpz" -O export.tpz
           mkdir -p ~/.local/share/godot/export_templates/
           unzip -o export.tpz -d ~/.local/share/godot/export_templates/
-          # Сдвинуть шаблоны на уровень выше если они в подпапке templates/
           if [ -d ~/.local/share/godot/export_templates/templates ]; then
             cp -r ~/.local/share/godot/export_templates/templates/* ~/.local/share/godot/export_templates/ 2>/dev/null || true
           fi
-          echo "=== Extracted templates ==="
-          ls -laR ~/.local/share/godot/export_templates/
 
       - name: Configure Godot for Android export
         run: |
@@ -79,65 +76,20 @@ jobs:
           echo "/android/debug_keystore_path = \"${HOME}/.android/debug.keystore\"" >> ~/.config/godot/editor_settings-4.2.2.tres
           keytool -genkey -v -keystore "${HOME}/.android/debug.keystore" -alias androiddebugkey -storepass android -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" 2>/dev/null || true
 
-      - name: Debug environment before export
-        env:
-          ANDROID_SDK_ROOT: ${{ env.ANDROID_SDK_ROOT }}
-        run: |
-          echo "=== Godot binary ==="
-          ls -la ${{ steps.get-godot.outputs.GODOT_BIN }}
-          echo "=== Export templates ==="
-          ls -laR ~/.local/share/godot/export_templates/ 2>/dev/null || echo "no templates dir"
-          echo "=== Android SDK ==="
-          ls -la $ANDROID_SDK_ROOT
-          echo "=== Platform tools ==="
-          ls -la $ANDROID_SDK_ROOT/platform-tools 2>/dev/null || echo "no platform-tools"
-          echo "=== Preset file ==="
-          cat .export_presets.cfg
-          echo "=== Project files ==="
-          ls -la
-
-      - name: Verify export templates before build
-        run: |
-          echo "=== Templates available ==="
-          ls -la ~/.local/share/godot/export_templates/ 2>/dev/null || echo "no templates"
-          file ~/.local/share/godot/export_templates/*.apk 2>/dev/null || echo "no apk files found"
-
       - name: Export Android APK
         env:
           ANDROID_SDK_ROOT: ${{ env.ANDROID_SDK_ROOT }}
         run: |
           cd "$GITHUB_WORKSPACE"
           mkdir -p build
-          # Godot headless экспорт с захватом лога
-          set -o pipefail
           ${{ steps.get-godot.outputs.GODOT_BIN }} \
             --headless \
             --path "$GITHUB_WORKSPACE" \
             --export-debug "Android" \
             "build/PocketBunker.apk" \
-            2>&1 | tee "$GITHUB_WORKSPACE/godot_export.log"
-          echo "=== Build directory contents ==="
-          ls -la build/ 2>/dev/null || echo "build dir empty or missing"
-          echo "=== All APK files in workspace ==="
-          find . -name "*.apk" -type f 2>/dev/null || echo "no apk files found"
+            --quit-on-finish
 
-      - name: Upload Godot export log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: Godot-Export-Log
-          path: godot_export.log
-          retention-days: 7
-
-      - name: Upload all APK files
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: All-APK-Files
-          path: "**/*.apk"
-          retention-days: 7
-
-      - name: Upload APK artifact (specific)
+      - name: Upload APK artifact
         if: success()
         uses: actions/upload-artifact@v4
         with:
