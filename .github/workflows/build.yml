@@ -43,25 +43,24 @@ jobs:
           yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses >/dev/null 2>&1 || true
           $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 
-      - name: Download Godot 4.2.2 headless
+      - name: Download Godot 4.2.2 Linux
         id: get-godot
         run: |
           GODOT_VERSION=4.2.2
-          GODOT_URL="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux_headless.64.zip"
+          GODOT_URL="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
           cd $RUNNER_TEMP
           wget -q "$GODOT_URL" -O godot.zip
           unzip -q godot.zip
-          chmod +x Godot_v${GODOT_VERSION}-stable_linux_headless.64
-          echo "GODOT_BIN=$RUNNER_TEMP/Godot_v${GODOT_VERSION}-stable_linux_headless.64" >> $GITHUB_OUTPUT
+          chmod +x Godot_v${GODOT_VERSION}-stable_linux.x86_64
+          echo "GODOT_BIN=$RUNNER_TEMP/Godot_v${GODOT_VERSION}-stable_linux.x86_64" >> $GITHUB_OUTPUT
 
       - name: Download Godot export templates (Android)
         run: |
           GODOT_VERSION=4.2.2
           cd $RUNNER_TEMP
-          wget -q "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_export.tpz" -O export.tpz
+          wget -q "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_export_templates.tpz" -O export.tpz
           mkdir -p ~/.local/share/godot/export_templates/
-          unzip -q export.tpz -d ~/.local/share/godot/export_templates/
-          mv ~/.local/share/godot/export_templates/templates ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable.custom 2>/dev/null || true
+          unzip -o export.tpz -d ~/.local/share/godot/export_templates/
 
       - name: Export Android APK
         env:
