@@ -82,10 +82,10 @@ jobs:
           ANDROID_SDK_ROOT: ${{ env.ANDROID_SDK_ROOT }}
         run: |
           mkdir -p build
-          # Godot headless не требует X11 для экспорта
-          ${{ steps.get-godot.outputs.GODOT_BIN }} \
+          # Godot headless экспорт (debug проще — не требует release keystore)
+          xvfb-run -a ${{ steps.get-godot.outputs.GODOT_BIN }} \
             --headless \
-            --export-release "Android" build/PocketBunker.apk \
+            --export-debug "Android" build/PocketBunker.apk \
             --quit-on-finish
 
       - name: Upload APK artifact
