@@ -69,14 +69,12 @@ jobs:
       - name: Configure Godot for Android export
         run: |
           mkdir -p ~/.config/godot ~/.android
-          cat > ~/.config/godot/editor_settings-4.2.2.tres << EOF
-[gd_resource type="EditorSettings" format=3 uid="android-export-config"]
-
-[resource]
-
-/android/custom_path = "${HOME}/android-sdk"
-/android/debug_keystore_path = "${HOME}/.android/debug.keystore"
-EOF
+          echo '[gd_resource type="EditorSettings" format=3 uid="android-export-config"]' > ~/.config/godot/editor_settings-4.2.2.tres
+          echo '' >> ~/.config/godot/editor_settings-4.2.2.tres
+          echo '[resource]' >> ~/.config/godot/editor_settings-4.2.2.tres
+          echo '' >> ~/.config/godot/editor_settings-4.2.2.tres
+          echo "/android/custom_path = \"${HOME}/android-sdk\"" >> ~/.config/godot/editor_settings-4.2.2.tres
+          echo "/android/debug_keystore_path = \"${HOME}/.android/debug.keystore\"" >> ~/.config/godot/editor_settings-4.2.2.tres
           keytool -genkey -v -keystore "${HOME}/.android/debug.keystore" -alias androiddebugkey -storepass android -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" 2>/dev/null || true
 
       - name: Export Android APK
