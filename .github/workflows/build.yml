@@ -98,15 +98,17 @@ jobs:
         env:
           ANDROID_SDK_ROOT: ${{ env.ANDROID_SDK_ROOT }}
         run: |
+          cd "$GITHUB_WORKSPACE"
           mkdir -p build
-          # Godot headless экспорт с подробным логированием в файл
+          # Godot headless экспорт из рабочей директории проекта
           ${{ steps.get-godot.outputs.GODOT_BIN }} \
             --headless \
-            --path "$GITHUB_WORKSPACE" \
             --export-debug "Android" \
-            "$GITHUB_WORKSPACE/build/PocketBunker.apk" \
+            "build/PocketBunker.apk" \
             --quit-on-finish \
             2>&1 | tee "$GITHUB_WORKSPACE/godot_export.log" || true
+          echo "=== Build directory contents ==="
+          ls -la build/ 2>/dev/null || echo "build dir empty or missing"
 
       - name: Upload Godot export log
         if: always()
