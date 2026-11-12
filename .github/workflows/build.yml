@@ -22,23 +22,35 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y wget unzip curl xvfb libgl1
 
-      - name: Download Godot 4.2.2 Linux
+      - name: Download Godot 4.2.2 Linux (via GitHub API)
         id: get-godot
         run: |
           GODOT_VERSION=4.2.2
           cd $RUNNER_TEMP
-          gh release download ${GODOT_VERSION}-stable -p "Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip" --repo godotengine/godot --clobber
-          unzip -q Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip
+          # Get asset ID for Linux binary
+          ASSET_ID=$(gh api "repos/godotengine/godot/releases/tags/${GODOT_VERSION}-stable" \
+            --jq '.assets[] | select(.name == "Godot_v'"${GODOT_VERSION}"'-stable_linux.x86_64.zip") | .id')
+          echo "Linux asset ID: $ASSET_ID"
+          # Download with auth token
+          gh api -H "Accept: application/octet-stream" \
+            "repos/godotengine/godot/releases/assets/${ASSET_ID}" > godot.zip
+          unzip -q godot.zip
           chmod +x Godot_v${GODOT_VERSION}-stable_linux.x86_64
           echo "GODOT_BIN=$RUNNER_TEMP/Godot_v${GODOT_VERSION}-stable_linux.x86_64" >> $GITHUB_OUTPUT
 
-      - name: Download Godot export templates (Windows)
+      - name: Download Godot export templates (Windows) (via GitHub API)
         run: |
           GODOT_VERSION=4.2.2
           cd $RUNNER_TEMP
-          gh release download ${GODOT_VERSION}-stable -p "Godot_v${GODOT_VERSION}-stable_export_templates.tpz" --repo godotengine/godot --clobber
+          # Get asset ID for export templates
+          ASSET_ID=$(gh api "repos/godotengine/godot/releases/tags/${GODOT_VERSION}-stable" \
+            --jq '.assets[] | select(.name == "Godot_v'"${GODOT_VERSION}"'-stable_export_templates.tpz") | .id')
+          echo "Templates asset ID: $ASSET_ID"
+          # Download with auth token
+          gh api -H "Accept: application/octet-stream" \
+            "repos/godotengine/godot/releases/assets/${ASSET_ID}" > export.tpz
           mkdir -p export_templates_tmp
-          unzip -o Godot_v${GODOT_VERSION}-stable_export_templates.tpz -d export_templates_tmp/
+          unzip -o export.tpz -d export_templates_tmp/
           mkdir -p ~/.local/share/godot/export_templates/
           cp export_templates_tmp/templates/${GODOT_VERSION}.stable/windows_debug.exe \
              ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable.windows_debug.exe
