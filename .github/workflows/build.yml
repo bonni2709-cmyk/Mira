@@ -54,16 +54,23 @@ jobs:
           chmod +x Godot_v${GODOT_VERSION}-stable_linux.x86_64
           echo "GODOT_BIN=$RUNNER_TEMP/Godot_v${GODOT_VERSION}-stable_linux.x86_64" >> $GITHUB_OUTPUT
 
-      - name: Download Godot export templates (Android)
+      - name: Download and install Godot export templates (Android)
         run: |
           GODOT_VERSION=4.2.2
           cd $RUNNER_TEMP
           wget -q "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_export_templates.tpz" -O export.tpz
+          mkdir -p export_templates_tmp
+          unzip -o export.tpz -d export_templates_tmp/
+          # Godot 4.x expects templates at:
+          # ~/.local/share/godot/export_templates/4.2.2.stable.android_debug.apk
+          # But the tpz contains: templates/4.2.2.stable/android_debug.apk
           mkdir -p ~/.local/share/godot/export_templates/
-          unzip -o export.tpz -d ~/.local/share/godot/export_templates/
-          if [ -d ~/.local/share/godot/export_templates/templates ]; then
-            cp -r ~/.local/share/godot/export_templates/templates/* ~/.local/share/godot/export_templates/ 2>/dev/null || true
-          fi
+          cp export_templates_tmp/templates/${GODOT_VERSION}.stable/android_debug.apk \
+             ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable.android_debug.apk
+          cp export_templates_tmp/templates/${GODOT_VERSION}.stable/android_release.apk \
+             ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable.android_release.apk
+          echo "=== Installed templates ==="
+          ls -la ~/.local/share/godot/export_templates/
 
       - name: Configure Godot for Android export
         run: |
