@@ -58,7 +58,7 @@ jobs:
         run: |
           GODOT_VERSION=4.2.2
           cd $RUNNER_TEMP
-          wget -q --tries=3 --timeout=120 "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_export_templates.tpz" -O export.tpz
+          curl -sL --max-time 120 --retry 3 "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_export_templates.tpz" -o export.tpz
           mkdir -p export_templates_tmp
           unzip -o export.tpz -d export_templates_tmp/
           # Godot 4.x expects templates at:
