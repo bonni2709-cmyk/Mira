@@ -30,7 +30,7 @@ jobs:
           # Android SDK command-line tools
           mkdir -p $HOME/android-sdk/cmdline-tools
           cd $HOME/android-sdk/cmdline-tools
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O tools.zip
+          wget -q --tries=3 --timeout=120 https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O tools.zip
           unzip -q tools.zip
           mv cmdline-tools latest
           cd ..
@@ -49,7 +49,7 @@ jobs:
           GODOT_VERSION=4.2.2
           GODOT_URL="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
           cd $RUNNER_TEMP
-          wget -q "$GODOT_URL" -O godot.zip
+          wget -q --tries=3 --timeout=120 "$GODOT_URL" -O godot.zip
           unzip -q godot.zip
           chmod +x Godot_v${GODOT_VERSION}-stable_linux.x86_64
           echo "GODOT_BIN=$RUNNER_TEMP/Godot_v${GODOT_VERSION}-stable_linux.x86_64" >> $GITHUB_OUTPUT
@@ -58,7 +58,7 @@ jobs:
         run: |
           GODOT_VERSION=4.2.2
           cd $RUNNER_TEMP
-          wget -q "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_export_templates.tpz" -O export.tpz
+          wget -q --tries=3 --timeout=120 "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_export_templates.tpz" -O export.tpz
           mkdir -p export_templates_tmp
           unzip -o export.tpz -d export_templates_tmp/
           # Godot 4.x expects templates at:
