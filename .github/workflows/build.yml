@@ -27,8 +27,8 @@ jobs:
         run: |
           GODOT_VERSION=4.2.2
           cd $RUNNER_TEMP
-          curl -sL --max-time 120 --retry 3 "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip" -o godot.zip
-          unzip -q godot.zip
+          gh release download ${GODOT_VERSION}-stable -p "Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip" --repo godotengine/godot --clobber
+          unzip -q Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip
           chmod +x Godot_v${GODOT_VERSION}-stable_linux.x86_64
           echo "GODOT_BIN=$RUNNER_TEMP/Godot_v${GODOT_VERSION}-stable_linux.x86_64" >> $GITHUB_OUTPUT
 
@@ -36,9 +36,9 @@ jobs:
         run: |
           GODOT_VERSION=4.2.2
           cd $RUNNER_TEMP
-          curl -sL --max-time 120 --retry 3 "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_export_templates.tpz" -o export.tpz
+          gh release download ${GODOT_VERSION}-stable -p "Godot_v${GODOT_VERSION}-stable_export_templates.tpz" --repo godotengine/godot --clobber
           mkdir -p export_templates_tmp
-          unzip -o export.tpz -d export_templates_tmp/
+          unzip -o Godot_v${GODOT_VERSION}-stable_export_templates.tpz -d export_templates_tmp/
           mkdir -p ~/.local/share/godot/export_templates/
           cp export_templates_tmp/templates/${GODOT_VERSION}.stable/windows_debug.exe \
              ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable.windows_debug.exe
