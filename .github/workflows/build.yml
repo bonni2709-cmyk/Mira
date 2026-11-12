@@ -27,7 +27,6 @@ jobs:
         run: |
           sudo apt-get update -y
           sudo apt-get install -y wget unzip curl libgl1 mesa-utils xvfb
-          # Android SDK command-line tools
           mkdir -p $HOME/android-sdk/cmdline-tools
           cd $HOME/android-sdk/cmdline-tools
           wget -q --tries=3 --timeout=120 https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O tools.zip
@@ -47,9 +46,8 @@ jobs:
         id: get-godot
         run: |
           GODOT_VERSION=4.2.2
-          GODOT_URL="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
           cd $RUNNER_TEMP
-          wget -q --tries=3 --timeout=120 "$GODOT_URL" -O godot.zip
+          wget -q --tries=3 --timeout=120 "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip" -O godot.zip
           unzip -q godot.zip
           chmod +x Godot_v${GODOT_VERSION}-stable_linux.x86_64
           echo "GODOT_BIN=$RUNNER_TEMP/Godot_v${GODOT_VERSION}-stable_linux.x86_64" >> $GITHUB_OUTPUT
@@ -61,15 +59,12 @@ jobs:
           curl -sL --max-time 120 --retry 3 "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_export_templates.tpz" -o export.tpz
           mkdir -p export_templates_tmp
           unzip -o export.tpz -d export_templates_tmp/
-          # Godot 4.x expects templates at:
-          # ~/.local/share/godot/export_templates/4.2.2.stable.android_debug.apk
-          # But the tpz contains: templates/4.2.2.stable/android_debug.apk
           mkdir -p ~/.local/share/godot/export_templates/
           cp export_templates_tmp/templates/${GODOT_VERSION}.stable/android_debug.apk \
              ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable.android_debug.apk
           cp export_templates_tmp/templates/${GODOT_VERSION}.stable/android_release.apk \
              ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable.android_release.apk
-          echo "=== Installed templates ==="
+          echo "=== Templates ==="
           ls -la ~/.local/share/godot/export_templates/
 
       - name: Configure Godot for Android export
@@ -83,33 +78,36 @@ jobs:
           echo "/android/debug_keystore_path = \"${HOME}/.android/debug.keystore\"" >> ~/.config/godot/editor_settings-4.2.2.tres
           keytool -genkey -v -keystore "${HOME}/.android/debug.keystore" -alias androiddebugkey -storepass android -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" 2>/dev/null || true
 
-      - name: Export Android APK
+      - name: Export Android APK (debug)
         env:
           ANDROID_SDK_ROOT: ${{ env.ANDROID_SDK_ROOT }}
         run: |
           cd "$GITHUB_WORKSPACE"
           mkdir -p build
-          set -o pipefail
           ${{ steps.get-godot.outputs.GODOT_BIN }} \
             --headless \
             --path "$GITHUB_WORKSPACE" \
-            --verbose \
             --export-debug "Android" \
             "build/PocketBunker.apk" \
-            --quit-on-finish \
-            2>&1 | tee "$GITHUB_WORKSPACE/godot_export.log"
+            --quit-on-finish
           echo "=== Build dir ==="
           ls -la build/ 2>/dev/null || echo "no build dir"
-          echo "=== All files ==="
-          find . -maxdepth 3 -name "*.apk" -o -name "*.log" 2>/dev/null || echo "nothing found"
+          echo "=== All APK files ==="
+          find . -name "*.apk" 2>/dev/null || echo "no apk"
 
-      - name: Upload Godot export log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: Godot-Export-Log
-          path: godot_export.log
-          retention-days: 7
+      - name: Export Android APK (release) if debug failed
+        if: failure()
+        env:
+          ANDROID_SDK_ROOT: ${{ env.ANDROID_SDK_ROOT }}
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          mkdir -p build
+          ${{ steps.get-godot.outputs.GODOT_BIN }} \
+            --headless \
+            --path "$GITHUB_WORKSPACE" \
+            --export-release "Android" \
+            "build/PocketBunker.apk" \
+            --quit-on-finish
 
       - name: Upload APK artifact
         if: success()
