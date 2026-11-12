@@ -90,24 +90,19 @@ jobs:
             --export-debug "Android" \
             "build/PocketBunker.apk" \
             --quit-on-finish
+          echo "=== Exit code: $? ==="
           echo "=== Build dir ==="
           ls -la build/ 2>/dev/null || echo "no build dir"
-          echo "=== All APK files ==="
-          find . -name "*.apk" 2>/dev/null || echo "no apk"
+          echo "=== All APK files in workspace ==="
+          find / -name "*.apk" -type f 2>/dev/null || echo "no apk anywhere"
 
-      - name: Export Android APK (release) if debug failed
-        if: failure()
-        env:
-          ANDROID_SDK_ROOT: ${{ env.ANDROID_SDK_ROOT }}
-        run: |
-          cd "$GITHUB_WORKSPACE"
-          mkdir -p build
-          ${{ steps.get-godot.outputs.GODOT_BIN }} \
-            --headless \
-            --path "$GITHUB_WORKSPACE" \
-            --export-release "Android" \
-            "build/PocketBunker.apk" \
-            --quit-on-finish
+      - name: Upload Godot export log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Godot-Export-Log
+          path: godot_export.log
+          retention-days: 7
 
       - name: Upload APK artifact
         if: success()
