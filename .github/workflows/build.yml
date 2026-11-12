@@ -47,10 +47,9 @@ jobs:
         id: get-godot
         run: |
           GODOT_VERSION=4.2.2
-          GODOT_URL="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
           cd $RUNNER_TEMP
-          wget -q "$GODOT_URL" -O godot.zip
-          unzip -q godot.zip
+          gh release download ${GODOT_VERSION}-stable -p "Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip" --repo godotengine/godot
+          unzip -q Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip
           chmod +x Godot_v${GODOT_VERSION}-stable_linux.x86_64
           echo "GODOT_BIN=$RUNNER_TEMP/Godot_v${GODOT_VERSION}-stable_linux.x86_64" >> $GITHUB_OUTPUT
 
@@ -58,9 +57,9 @@ jobs:
         run: |
           GODOT_VERSION=4.2.2
           cd $RUNNER_TEMP
-          wget -q "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_export_templates.tpz" -O export.tpz
+          gh release download ${GODOT_VERSION}-stable -p "Godot_v${GODOT_VERSION}-stable_export_templates.tpz" --repo godotengine/godot
           mkdir -p export_templates_tmp
-          unzip -o export.tpz -d export_templates_tmp/
+          unzip -o Godot_v${GODOT_VERSION}-stable_export_templates.tpz -d export_templates_tmp/
           # Godot 4.x expects templates at:
           # ~/.local/share/godot/export_templates/4.2.2.stable.android_debug.apk
           # But the tpz contains: templates/4.2.2.stable/android_debug.apk
