@@ -89,12 +89,27 @@ jobs:
         run: |
           cd "$GITHUB_WORKSPACE"
           mkdir -p build
+          set -o pipefail
           ${{ steps.get-godot.outputs.GODOT_BIN }} \
             --headless \
             --path "$GITHUB_WORKSPACE" \
+            --verbose \
             --export-debug "Android" \
             "build/PocketBunker.apk" \
-            --quit-on-finish
+            --quit-on-finish \
+            2>&1 | tee "$GITHUB_WORKSPACE/godot_export.log"
+          echo "=== Build dir ==="
+          ls -la build/ 2>/dev/null || echo "no build dir"
+          echo "=== All files ==="
+          find . -maxdepth 3 -name "*.apk" -o -name "*.log" 2>/dev/null || echo "nothing found"
+
+      - name: Upload Godot export log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Godot-Export-Log
+          path: godot_export.log
+          retention-days: 7
 
       - name: Upload APK artifact
         if: success()
